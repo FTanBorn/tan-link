@@ -1,7 +1,21 @@
 // src/components/layout/Header.tsx
 'use client'
-import { AppBar, Toolbar, Button, Typography, IconButton, Box, useTheme } from '@mui/material'
-import { Brightness4, Brightness7 } from '@mui/icons-material'
+import { useState } from 'react'
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Typography,
+  IconButton,
+  Box,
+  useTheme,
+  Container,
+  Menu,
+  MenuItem,
+  Avatar,
+  Fade
+} from '@mui/material'
+import { Brightness4, Brightness7, KeyboardArrowDown } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { auth } from '@/config/firebase'
@@ -13,54 +27,121 @@ export default function Header() {
   const router = useRouter()
   const { user } = useAuth()
   const { toggleTheme } = useThemeContext()
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
 
   const handleLogout = async () => {
     await signOut(auth)
+    handleClose()
     router.push('/')
   }
 
+  const isDarkMode = theme.palette.mode === 'dark'
+  const textColor = isDarkMode ? 'white' : 'black'
+
   return (
-    <AppBar position='sticky'>
-      <Toolbar>
-        <Typography
-          variant='h6'
-          component='div'
-          sx={{
-            flexGrow: 1,
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-          onClick={() => router.push('/')}
-        >
-          TanLink
-        </Typography>
+    <AppBar
+      position='sticky'
+      elevation={0}
+      sx={{
+        backdropFilter: 'blur(20px)',
+        backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)'
+      }}
+    >
+      <Container maxWidth='lg'>
+        <Toolbar sx={{ py: 1 }}>
+          <Typography
+            variant='h5'
+            component='div'
+            sx={{
+              flexGrow: 1,
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+            onClick={() => router.push('/')}
+          >
+            TanLink
+          </Typography>
 
-        <IconButton onClick={toggleTheme} color='inherit'>
-          {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-        </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Theme toggle button only shows for logged-in users */}
+            {user && (
+              <IconButton
+                onClick={toggleTheme}
+                sx={{
+                  mr: 1,
+                  color: textColor // Explicitly set icon color
+                }}
+              >
+                {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+              </IconButton>
+            )}
 
-        <Box sx={{ ml: 2 }}>
-          {user ? (
-            <>
-              <Button color='inherit' onClick={() => router.push('/dashboard')} sx={{ mr: 1 }}>
-                Dashboard
-              </Button>
-              <Button color='inherit' onClick={handleLogout}>
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button color='inherit' onClick={() => router.push('/auth/login')} sx={{ mr: 1 }}>
-                Login
-              </Button>
-              <Button color='inherit' onClick={() => router.push('/auth/register')}>
-                Register
-              </Button>
-            </>
-          )}
-        </Box>
-      </Toolbar>
+            {user ? (
+              <>
+                <Button
+                  onClick={handleMenu}
+                  endIcon={<KeyboardArrowDown sx={{ color: textColor }} />}
+                  sx={{
+                    borderRadius: '20px',
+                    px: 2,
+                    color: textColor // Explicitly set text color
+                  }}
+                  startIcon={
+                    <Avatar sx={{ width: 24, height: 24 }} src={user.photoURL || undefined}>
+                      {user.email?.[0].toUpperCase()}
+                    </Avatar>
+                  }
+                >
+                  {user.displayName || user.email?.split('@')[0]}
+                </Button>
+                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose} TransitionComponent={Fade}>
+                  <MenuItem
+                    onClick={() => {
+                      router.push('/dashboard')
+                      handleClose()
+                    }}
+                  >
+                    Dashboard
+                  </MenuItem>
+                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button
+                  sx={{
+                    color: textColor
+                  }}
+                  onClick={() => router.push('/auth/login')}
+                >
+                  Login
+                </Button>
+                <Button
+                  variant='contained'
+                  onClick={() => router.push('/auth/register')}
+                  sx={{
+                    boxShadow: 'none',
+                    '&:hover': { boxShadow: 'none' }
+                  }}
+                >
+                  Register
+                </Button>
+              </>
+            )}
+          </Box>
+        </Toolbar>
+      </Container>
     </AppBar>
   )
 }

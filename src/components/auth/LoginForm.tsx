@@ -36,7 +36,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, formData.email, formData.password)
-      router.push('/dashboard')
+      router.push('/')
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -51,7 +51,7 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      router.push('/dashboard')
+      router.push('/')
     } catch (error: any) {
       setError(error.message)
     } finally {

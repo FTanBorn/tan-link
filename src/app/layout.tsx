@@ -1,14 +1,21 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
 import { AuthProvider } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import Header from '@/components/layout/Header'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  const hideHeader = /^\/[^\/]+\/?$/.test(pathname)
+
   return (
     <html lang='en'>
       <body>
         <AuthProvider>
           <ThemeProvider>
-            <Header />
+            {!hideHeader && <Header />}
             {children}
           </ThemeProvider>
         </AuthProvider>

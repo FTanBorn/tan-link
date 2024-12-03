@@ -76,7 +76,7 @@ export default function DashboardPage() {
           <Button
             variant='contained'
             startIcon={<AddIcon />}
-            onClick={() => router.push('/dashboard/links')}
+            onClick={() => router.push('/links')}
             sx={{ mr: 2, borderRadius: '20px' }}
           >
             Add New Link

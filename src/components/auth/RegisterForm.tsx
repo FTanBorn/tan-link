@@ -17,7 +17,8 @@ import {
 import { Visibility, VisibilityOff, Google } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth'
-import { auth } from '@/config/firebase'
+import { auth, db } from '@/config/firebase'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -25,21 +26,87 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
+    username: '',
     name: '',
     email: '',
     password: ''
   })
+  const [usernameError, setUsernameError] = useState('')
+
+  // Username validasyonu
+  const validateUsername = (username: string) => {
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
+    if (!usernameRegex.test(username)) {
+      return 'Username must be 3-20 characters long and can only contain letters, numbers, and underscores'
+    }
+    return ''
+  }
+
+  // Username benzersizlik kontrolü
+  const checkUsernameAvailability = async (username: string) => {
+    const usernameDoc = doc(db, 'usernames', username.toLowerCase())
+    const usernameSnapshot = await getDoc(usernameDoc)
+    return !usernameSnapshot.exists()
+  }
+
+  const handleUsernameChange = async (username: string) => {
+    setFormData(prev => ({ ...prev, username }))
+    const validationError = validateUsername(username)
+    if (validationError) {
+      setUsernameError(validationError)
+      return
+    }
+
+    try {
+      const isAvailable = await checkUsernameAvailability(username)
+      setUsernameError(isAvailable ? '' : 'Username is already taken')
+    } catch (error) {
+      setUsernameError('Error checking username availability')
+      console.log(error)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
+    // Son bir kez username kontrolü
+    const validationError = validateUsername(formData.username)
+    if (validationError) {
+      setError(validationError)
+      setLoading(false)
+      return
+    }
+
     try {
+      // Username kullanılabilirlik kontrolü
+      const isAvailable = await checkUsernameAvailability(formData.username)
+      if (!isAvailable) {
+        setError('Username is already taken')
+        setLoading(false)
+        return
+      }
+
+      // Kullanıcı oluşturma
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password)
 
+      // Profil güncelleme
       await updateProfile(userCredential.user, {
         displayName: formData.name
+      })
+
+      // Firestore'a kullanıcı verilerini kaydetme
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        username: formData.username.toLowerCase(),
+        email: formData.email,
+        displayName: formData.name,
+        createdAt: new Date().toISOString()
+      })
+
+      // Username rezervasyonu
+      await setDoc(doc(db, 'usernames', formData.username.toLowerCase()), {
+        uid: userCredential.user.uid
       })
 
       router.push('/dashboard')
@@ -57,7 +124,7 @@ export default function RegisterPage() {
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      router.push('/dashboard')
+      router.push('/auth/setup-username')
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -89,6 +156,20 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label='Username'
+            margin='normal'
+            value={formData.username}
+            onChange={e => handleUsernameChange(e.target.value)}
+            error={!!usernameError}
+            helperText={usernameError}
+            required
+            InputProps={{
+              startAdornment: <InputAdornment position='start'>@</InputAdornment>
+            }}
+          />
+
           <TextField
             fullWidth
             label='Full Name'
@@ -132,8 +213,8 @@ export default function RegisterPage() {
             type='submit'
             variant='contained'
             size='large'
-            disabled={loading}
-            sx={{ mt: 3, mb: 2 }}
+            disabled={loading || !!usernameError}
+            sx={{ mt: 3, mb: 2, borderRadius: '20px' }}
           >
             {loading ? <CircularProgress size={24} /> : 'Register'}
           </Button>
@@ -145,7 +226,7 @@ export default function RegisterPage() {
           startIcon={<Google />}
           onClick={handleGoogleRegister}
           disabled={loading}
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, borderRadius: '20px' }}
         >
           Continue with Google
         </Button>

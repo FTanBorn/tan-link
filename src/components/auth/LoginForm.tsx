@@ -17,7 +17,8 @@ import {
 import { Visibility, VisibilityOff, Google } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
-import { auth } from '@/config/firebase'
+import { auth, db } from '@/config/firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -50,8 +51,18 @@ export default function LoginPage() {
 
     try {
       const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
-      router.push('/')
+      const result = await signInWithPopup(auth, provider)
+
+      // Kullanıcının username'i var mı kontrol et
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid))
+
+      if (!userDoc.exists() || !userDoc.data().username) {
+        // Username yoksa setup sayfasına yönlendir
+        router.push('/auth/setup-username')
+      } else {
+        // Username varsa dashboard'a yönlendir
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       setError(error.message)
     } finally {

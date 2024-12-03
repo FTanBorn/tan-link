@@ -1,6 +1,6 @@
 // src/components/home/ProfilePreview.tsx
 'use client'
-import { Paper, Box, Typography, Button } from '@mui/material'
+import { Paper, Box, Button } from '@mui/material'
 import {
   Facebook,
   Instagram,
@@ -11,56 +11,110 @@ import {
   WhatsApp,
   Telegram,
   Language,
-  Mail
+  Mail,
+  Store,
+  Code
 } from '@mui/icons-material'
 
-const socialLinks = [
-  { icon: <Instagram />, name: 'Instagram', color: '#E1306C', bgColor: '#FCE4EC' },
-  { icon: <GitHub />, name: 'Github', color: '#333333', bgColor: '#F5F5F5' },
-  { icon: <YouTube />, name: 'YouTube', color: '#FF0000', bgColor: '#FFEBEE' },
-  { icon: <WhatsApp />, name: 'WhatsApp', color: '#25D366', bgColor: '#E8F5E9' },
-  { icon: <Twitter />, name: 'Twitter', color: '#1DA1F2', bgColor: '#E3F2FD' },
-  { icon: <Facebook />, name: 'Facebook', color: '#1877F2', bgColor: '#E3F2FD' },
-  { icon: <Language />, name: 'Website', color: '#9C27B0', bgColor: '#F3E5F5' },
-  { icon: <LinkedIn />, name: 'LinkedIn', color: '#0077B5', bgColor: '#E3F2FD' },
-  { icon: <Telegram />, name: 'Telegram', color: '#0088cc', bgColor: '#E3F2FD' },
-  { icon: <Mail />, name: 'Email', color: '#EA4335', bgColor: '#FFEBEE' }
+interface LinkItem {
+  id: string
+  type: string
+  title: string
+  url: string
+}
+
+interface ProfilePreviewProps {
+  links?: LinkItem[]
+}
+
+const linkStyles = {
+  instagram: { color: '#E1306C', bgColor: '#FCE4EC' },
+  github: { color: '#333333', bgColor: '#F5F5F5' },
+  youtube: { color: '#FF0000', bgColor: '#FFEBEE' },
+  whatsapp: { color: '#25D366', bgColor: '#E8F5E9' },
+  twitter: { color: '#1DA1F2', bgColor: '#E3F2FD' },
+  facebook: { color: '#1877F2', bgColor: '#E3F2FD' },
+  website: { color: '#9C27B0', bgColor: '#F3E5F5' },
+  linkedin: { color: '#0077B5', bgColor: '#E3F2FD' },
+  store: { color: '#FF9800', bgColor: '#FFF3E0' },
+  telegram: { color: '#0088cc', bgColor: '#E3F2FD' },
+  email: { color: '#EA4335', bgColor: '#FFEBEE' },
+  portfolio: { color: '#607D8B', bgColor: '#ECEFF1' }
+}
+
+const defaultLinks = [
+  { id: '1', type: 'instagram', title: 'Instagram', url: '#', color: '#E1306C', bgColor: '#FCE4EC' },
+  { id: '2', type: 'github', title: 'Github', url: '#', color: '#333333', bgColor: '#F5F5F5' },
+  { id: '3', type: 'youtube', title: 'YouTube', url: '#', color: '#FF0000', bgColor: '#FFEBEE' },
+  { id: '4', type: 'whatsapp', title: 'WhatsApp', url: '#', color: '#25D366', bgColor: '#E8F5E9' },
+  { id: '5', type: 'twitter', title: 'Twitter', url: '#', color: '#1DA1F2', bgColor: '#E3F2FD' },
+  { id: '6', type: 'facebook', title: 'Facebook', url: '#', color: '#1877F2', bgColor: '#E3F2FD' },
+  { id: '7', type: 'website', title: 'Website', url: '#', color: '#9C27B0', bgColor: '#F3E5F5' },
+  { id: '8', type: 'linkedin', title: 'LinkedIn', url: '#', color: '#0077B5', bgColor: '#E3F2FD' },
+  { id: '10', type: 'telegram', title: 'Telegram', url: '#', color: '#0088cc', bgColor: '#E3F2FD' },
+  { id: '11', type: 'email', title: 'Email', url: '#', color: '#EA4335', bgColor: '#FFEBEE' }
 ]
 
-export default function ProfilePreview() {
+const getIcon = (type: string) => {
+  const icons = {
+    instagram: <Instagram />,
+    github: <GitHub />,
+    youtube: <YouTube />,
+    whatsapp: <WhatsApp />,
+    twitter: <Twitter />,
+    facebook: <Facebook />,
+    website: <Language />,
+    linkedin: <LinkedIn />,
+    store: <Store />,
+    telegram: <Telegram />,
+    email: <Mail />,
+    portfolio: <Code />
+  }
+  return icons[type as keyof typeof icons] || <Language />
+}
+
+export default function ProfilePreview({ links = defaultLinks }: ProfilePreviewProps) {
   return (
     <Paper
       elevation={8}
       sx={{
-        height: '100%',
+        height: 'auto',
         borderRadius: 4,
-        overflow: 'hidden',
         position: 'relative'
       }}
     >
       <Box sx={{ p: 3 }}>
-        <Typography variant='h6' gutterBottom>
-          Profile Preview
-        </Typography>
-        {socialLinks.map((link, index) => (
-          <Button
-            key={index}
-            variant='contained'
-            fullWidth
-            startIcon={link.icon}
-            sx={{
-              mb: 2,
-              bgcolor: link.bgColor,
-              color: link.color,
-              '&:hover': {
-                bgcolor: link.color,
-                color: '#fff'
-              }
-            }}
-          >
-            {link.name}
-          </Button>
-        ))}
+        <Box>
+          {links.map(link => {
+            const style = linkStyles[link.type as keyof typeof linkStyles] || linkStyles.website
+
+            return (
+              <Button
+                key={link.id}
+                variant='contained'
+                fullWidth
+                startIcon={getIcon(link.type)}
+                sx={{
+                  mb: 2,
+                  bgcolor: style.bgColor,
+                  color: style.color,
+                  '&:hover': {
+                    bgcolor: style.color,
+                    color: '#fff'
+                  },
+                  justifyContent: 'center',
+                  px: 3,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  fontSize: '1rem'
+                }}
+              >
+                {link.title}
+              </Button>
+            )
+          })}
+        </Box>
       </Box>
     </Paper>
   )

@@ -65,7 +65,6 @@ export default function DashboardPage() {
 
   return (
     <Box>
-      {/* Welcome Section */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant='h4' gutterBottom>
@@ -95,7 +94,6 @@ export default function DashboardPage() {
         </Box>
       </Box>
 
-      {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {stats.map((stat, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
@@ -127,7 +125,6 @@ export default function DashboardPage() {
         ))}
       </Grid>
 
-      {/* Recent Performance */}
       <Card>
         <CardContent>
           <Typography variant='h6' gutterBottom>

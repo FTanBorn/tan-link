@@ -1,4 +1,3 @@
-// src/app/auth/register/page.tsx
 'use client'
 import { useState } from 'react'
 import {
@@ -33,7 +32,6 @@ export default function RegisterPage() {
   })
   const [usernameError, setUsernameError] = useState('')
 
-  // Username validasyonu
   const validateUsername = (username: string) => {
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
     if (!usernameRegex.test(username)) {
@@ -42,7 +40,6 @@ export default function RegisterPage() {
     return ''
   }
 
-  // Username benzersizlik kontrolü
   const checkUsernameAvailability = async (username: string) => {
     const usernameDoc = doc(db, 'usernames', username.toLowerCase())
     const usernameSnapshot = await getDoc(usernameDoc)
@@ -71,7 +68,6 @@ export default function RegisterPage() {
     setLoading(true)
     setError('')
 
-    // Son bir kez username kontrolü
     const validationError = validateUsername(formData.username)
     if (validationError) {
       setError(validationError)
@@ -80,7 +76,6 @@ export default function RegisterPage() {
     }
 
     try {
-      // Username kullanılabilirlik kontrolü
       const isAvailable = await checkUsernameAvailability(formData.username)
       if (!isAvailable) {
         setError('Username is already taken')
@@ -88,15 +83,12 @@ export default function RegisterPage() {
         return
       }
 
-      // Kullanıcı oluşturma
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password)
 
-      // Profil güncelleme
       await updateProfile(userCredential.user, {
         displayName: formData.name
       })
 
-      // Firestore'a kullanıcı verilerini kaydetme
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         username: formData.username.toLowerCase(),
         email: formData.email,
@@ -104,7 +96,6 @@ export default function RegisterPage() {
         createdAt: new Date().toISOString()
       })
 
-      // Username rezervasyonu
       await setDoc(doc(db, 'usernames', formData.username.toLowerCase()), {
         uid: userCredential.user.uid
       })

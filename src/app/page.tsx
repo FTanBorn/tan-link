@@ -1,4 +1,3 @@
-// src/app/page.tsx
 'use client'
 import { Box, Button, Container, Typography, Grid, Card, CardContent } from '@mui/material'
 import { Share, Visibility, Analytics, Palette } from '@mui/icons-material'
@@ -37,7 +36,6 @@ export default function Home() {
 
   return (
     <Box>
-      {/* Hero Section */}
       <Box
         sx={{
           background:
@@ -91,7 +89,6 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* Features Section */}
       <Container maxWidth='lg' sx={{ py: 10 }}>
         <Typography variant='h3' component='h2' textAlign='center' gutterBottom>
           Features
@@ -122,7 +119,6 @@ export default function Home() {
         </Grid>
       </Container>
 
-      {/* Footer */}
       <Box
         component='footer'
         sx={{

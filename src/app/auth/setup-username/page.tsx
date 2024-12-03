@@ -1,4 +1,3 @@
-// src/app/auth/setup-username/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
 import {
@@ -25,14 +24,12 @@ export default function SetupUsername() {
   const [username, setUsername] = useState('')
   const [usernameError, setUsernameError] = useState('')
 
-  // Eğer kullanıcı yoksa veya zaten username varsa dashboard'a yönlendir
   useEffect(() => {
     if (!user) {
       router.push('/auth/login')
       return
     }
 
-    // Kullanıcının zaten username'i var mı kontrol et
     const checkExistingUsername = async () => {
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       if (userDoc.exists() && userDoc.data().username) {
@@ -43,7 +40,6 @@ export default function SetupUsername() {
     checkExistingUsername()
   }, [user, router])
 
-  // Username validasyonu
   const validateUsername = (username: string) => {
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
     if (!usernameRegex.test(username)) {
@@ -52,7 +48,6 @@ export default function SetupUsername() {
     return ''
   }
 
-  // Username benzersizlik kontrolü
   const checkUsernameAvailability = async (username: string) => {
     const usernameDoc = doc(db, 'usernames', username.toLowerCase())
     const usernameSnapshot = await getDoc(usernameDoc)
@@ -84,7 +79,6 @@ export default function SetupUsername() {
     setError('')
 
     try {
-      // Son bir kez username kontrolü
       const validationError = validateUsername(username)
       if (validationError) {
         setError(validationError)
@@ -97,7 +91,6 @@ export default function SetupUsername() {
         return
       }
 
-      // Kullanıcı verilerini güncelle
       await setDoc(doc(db, 'users', user.uid), {
         username: username.toLowerCase(),
         email: user.email,
@@ -105,7 +98,6 @@ export default function SetupUsername() {
         createdAt: new Date().toISOString()
       })
 
-      // Username rezervasyonu
       await setDoc(doc(db, 'usernames', username.toLowerCase()), {
         uid: user.uid
       })

@@ -1,4 +1,3 @@
-// src/app/links/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
 import {
@@ -107,7 +106,7 @@ function SortableLink({
             alignItems: 'center',
             gap: 2,
             '&:last-child': { pb: 2 },
-            minHeight: '60px' // Minimum yükseklik ekledik
+            minHeight: '60px'
           }}
         >
           <div {...listeners} style={{ cursor: 'move', flexShrink: 0 }}>
@@ -119,7 +118,7 @@ function SortableLink({
           <Box
             sx={{
               flexGrow: 1,
-              minWidth: 0 // Önemli: text overflow için
+              minWidth: 0
             }}
           >
             <Typography variant='subtitle2' noWrap>
@@ -134,7 +133,7 @@ function SortableLink({
             sx={{
               display: 'flex',
               gap: 1,
-              flexShrink: 0 // Butonların küçülmesini engelle
+              flexShrink: 0
             }}
           >
             <Tooltip title='Edit'>
@@ -172,7 +171,6 @@ export default function LinksPage() {
     })
   )
 
-  // Linkleri Firebase'den çek
   useEffect(() => {
     if (!user) return
 
@@ -190,7 +188,6 @@ export default function LinksPage() {
     return () => unsubscribe()
   }, [user])
 
-  // Link ekleme
   const handleAddLink = async () => {
     if (!user || !newLink.type || !newLink.url) return
 
@@ -209,7 +206,6 @@ export default function LinksPage() {
     }
   }
 
-  // Link silme
   const handleDeleteLink = async (id: string) => {
     if (!user) return
 
@@ -220,7 +216,6 @@ export default function LinksPage() {
     }
   }
 
-  // Link düzenleme
   const handleEditLink = async () => {
     if (!user || !editingLink) return
 
@@ -239,7 +234,6 @@ export default function LinksPage() {
     }
   }
 
-  // Sıralama güncelleme
   const handleDragEnd = async (event: any) => {
     if (!user || !event.active || !event.over) return
 
@@ -252,10 +246,8 @@ export default function LinksPage() {
     const newLinks = arrayMove(links, oldIndex, newIndex)
     setLinks(newLinks)
 
-    // Batch update için
     const batch = writeBatch(db)
 
-    // Her linkin yeni order'ını güncelle
     newLinks.forEach((link, index) => {
       const linkRef = doc(db, `users/${user.uid}/links/${link.id}`)
       batch.update(linkRef, { order: index })

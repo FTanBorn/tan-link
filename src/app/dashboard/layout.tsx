@@ -6,7 +6,6 @@ import { Box, Drawer, IconButton, useMediaQuery, useTheme } from '@mui/material'
 import { Menu as MenuIcon } from '@mui/icons-material'
 import Sidebar from '@/components/dashboard/Sidebar'
 
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -19,7 +18,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* Mobile menu button */}
       {isMobile && (
         <IconButton
           color='inherit'
@@ -42,7 +40,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </IconButton>
       )}
 
-      {/* Sidebar for mobile */}
       <Drawer
         variant='temporary'
         open={mobileOpen}
@@ -60,7 +57,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar onClose={() => setMobileOpen(false)} />
       </Drawer>
 
-      {/* Sidebar for desktop */}
       <Drawer
         variant='permanent'
         sx={{
@@ -78,7 +74,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar />
       </Drawer>
 
-      {/* Main content */}
       <Box
         component='main'
         sx={{

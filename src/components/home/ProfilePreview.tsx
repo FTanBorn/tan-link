@@ -1,4 +1,3 @@
-// src/components/home/ProfilePreview.tsx
 'use client'
 import { Paper, Box, Button } from '@mui/material'
 import {

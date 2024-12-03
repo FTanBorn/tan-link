@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import { AuthProvider } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import Header from '@/components/layout/Header'

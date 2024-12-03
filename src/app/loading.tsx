@@ -1,4 +1,3 @@
-// src/app/loading.tsx
 import { Box, CircularProgress, Container } from '@mui/material'
 
 export default function Loading() {

@@ -1,4 +1,3 @@
-// src/app/auth/login/page.tsx
 'use client'
 import { useState } from 'react'
 import {
@@ -53,14 +52,11 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
 
-      // Kullanıcının username'i var mı kontrol et
       const userDoc = await getDoc(doc(db, 'users', result.user.uid))
 
       if (!userDoc.exists() || !userDoc.data().username) {
-        // Username yoksa setup sayfasına yönlendir
         router.push('/auth/setup-username')
       } else {
-        // Username varsa dashboard'a yönlendir
         router.push('/dashboard')
       }
     } catch (error: any) {

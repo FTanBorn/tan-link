@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 'use client'
 import { useState } from 'react'
 import {
@@ -74,13 +73,12 @@ export default function Header() {
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Theme toggle button only shows for logged-in users */}
             {user && (
               <IconButton
                 onClick={toggleTheme}
                 sx={{
                   mr: 1,
-                  color: textColor // Explicitly set icon color
+                  color: textColor
                 }}
               >
                 {isDarkMode ? <Brightness7 /> : <Brightness4 />}
@@ -95,7 +93,7 @@ export default function Header() {
                   sx={{
                     borderRadius: '20px',
                     px: 2,
-                    color: textColor // Explicitly set text color
+                    color: textColor
                   }}
                   startIcon={
                     <Avatar sx={{ width: 24, height: 24 }} src={user.photoURL || undefined}>

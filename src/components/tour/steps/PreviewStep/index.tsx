@@ -47,7 +47,7 @@ export default function PreviewStep() {
     fetchUsername()
   }, [user])
 
-  const profileUrl = username ? `tanlink.me/${username}` : ''
+  const profileUrl = username ? `${username}` : ''
 
   const handleCopyLink = async () => {
     try {
@@ -61,7 +61,7 @@ export default function PreviewStep() {
 
   const handleFinish = () => {
     markStepCompleted('preview')
-    window.location.href = profileUrl
+    router.push(`/${profileUrl}`)
   }
 
   return (
@@ -116,7 +116,7 @@ export default function PreviewStep() {
                 fullWidth
                 variant='outlined'
                 size='medium'
-                value={profileUrl}
+                value={`tanlink.me/${profileUrl}`}
                 InputProps={{
                   readOnly: true,
                   sx: { bgcolor: 'background.default' },

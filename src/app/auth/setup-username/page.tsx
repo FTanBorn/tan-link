@@ -26,7 +26,7 @@ export default function SetupUsername() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/auth/login')
+      router.push('/r')
       return
     }
 

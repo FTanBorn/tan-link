@@ -139,7 +139,7 @@ export default function LoginPage() {
           <Typography variant='body2' color='text.secondary'>
             Don`t have an account?
             <Link
-              href='/auth/register'
+              href='/r'
               sx={{
                 textDecoration: 'none',
                 fontWeight: 'bold',

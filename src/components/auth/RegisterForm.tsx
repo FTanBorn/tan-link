@@ -226,7 +226,7 @@ export default function RegisterPage() {
           <Typography variant='body2' color='text.secondary'>
             Already have an account?{' '}
             <Link
-              href='/auth/login'
+              href='/r'
               sx={{
                 textDecoration: 'none',
                 fontWeight: 'bold',

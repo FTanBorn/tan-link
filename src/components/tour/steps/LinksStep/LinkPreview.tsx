@@ -2,6 +2,9 @@
 import { Box, Paper, Typography, Button, Avatar } from '@mui/material'
 import { useAuth } from '@/context/AuthContext'
 import { platformIcons } from './constants'
+import { useEffect, useState } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 
 interface Link {
   id: string
@@ -17,6 +20,25 @@ interface LinkPreviewProps {
 
 export default function LinkPreview({ links }: LinkPreviewProps) {
   const { user } = useAuth()
+  const [username, setUsername] = useState<string | null>(null)
+
+  console.log(user)
+
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (!user) return
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (userDoc.exists()) {
+          setUsername(userDoc.data().username)
+        }
+      } catch (error) {
+        console.error('Error fetching username:', error)
+      }
+    }
+
+    fetchUsername()
+  }, [user])
 
   return (
     <Paper
@@ -41,7 +63,7 @@ export default function LinkPreview({ links }: LinkPreviewProps) {
           {user?.email?.[0].toUpperCase()}
         </Avatar>
         <Typography variant='h6' gutterBottom>
-          {user?.displayName || user?.email?.split('@')[0]}
+          {username || user?.email?.split('@')[0]}
         </Typography>
       </Box>
 

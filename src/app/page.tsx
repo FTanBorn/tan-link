@@ -64,12 +64,12 @@ export default function Home() {
                     <Button
                       variant='contained'
                       size='large'
-                      onClick={() => router.push('/auth/register')}
+                      onClick={() => router.push('/r')}
                       sx={{ mr: 2 }}
                     >
                       Start Free
                     </Button>
-                    <Button variant='outlined' size='large' onClick={() => router.push('/auth/login')}>
+                    <Button variant='outlined' size='large' onClick={() => router.push('/r')}>
                       Sign In
                     </Button>
                   </>

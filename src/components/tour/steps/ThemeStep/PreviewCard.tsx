@@ -3,6 +3,9 @@ import { Box, Paper, Typography, Button, Avatar } from '@mui/material'
 import { useAuth } from '@/context/AuthContext'
 import { ThemePreset } from '@/types/theme'
 import { platformIcons } from '../LinksStep/constants'
+import { useEffect, useState } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 
 interface PreviewCardProps {
   theme?: ThemePreset | null
@@ -35,6 +38,23 @@ const defaultStyles = {
 
 export default function PreviewCard({ theme, links = [] }: PreviewCardProps) {
   const { user } = useAuth()
+  const [username, setUsername] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (!user) return
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (userDoc.exists()) {
+          setUsername(userDoc.data().username)
+        }
+      } catch (error) {
+        console.error('Error fetching username:', error)
+      }
+    }
+
+    fetchUsername()
+  }, [user])
 
   const getButtonStyle = (platformInfo: (typeof platformIcons)[keyof typeof platformIcons]) => {
     if (!theme) {
@@ -89,7 +109,7 @@ export default function PreviewCard({ theme, links = [] }: PreviewCardProps) {
             {user?.email?.[0].toUpperCase()}
           </Avatar>
           <Typography variant='h6' fontWeight='bold'>
-            {user?.displayName || user?.email?.split('@')[0]}
+            {username || user?.email?.split('@')[0]}
           </Typography>
           <Typography variant='body2' color='text.secondary'>
             Your Bio Here

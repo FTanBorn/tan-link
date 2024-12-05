@@ -34,7 +34,6 @@ const defaultStyles = {
 }
 
 export default function PreviewCard({ theme, links = [] }: PreviewCardProps) {
-  debugger
   const { user } = useAuth()
 
   const getButtonStyle = (platformInfo: (typeof platformIcons)[keyof typeof platformIcons]) => {

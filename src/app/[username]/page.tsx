@@ -191,17 +191,43 @@ export default function ProfilePage({ params }: PageProps) {
               )
             })}
           </Box>
-
-          <Typography
-            variant='body2'
+          <Box
             sx={{
+              width: '100%',
               mt: 4,
-              color: theme?.textColor || 'text.secondary',
-              opacity: 0.5
+              pt: 4,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              textAlign: 'center'
             }}
           >
-            Powered by TanLink
-          </Typography>
+            <Typography
+              variant='body2'
+              sx={{
+                color: theme?.textColor || 'text.secondary',
+                opacity: 0.5,
+                mb: 2
+              }}
+            >
+              Powered by TanLink
+            </Typography>
+
+            <Button
+              href='/r'
+              variant='text'
+              sx={{
+                color: '#2196F3',
+                fontWeight: 'bold',
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                '&:hover': {
+                  bgcolor: 'rgba(33, 150, 243, 0.08)'
+                }
+              }}
+            >
+              Want to create your own TanLink profile?
+            </Button>
+          </Box>
         </Paper>
       </Container>
     </Box>

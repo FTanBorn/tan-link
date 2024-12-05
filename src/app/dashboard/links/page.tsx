@@ -263,7 +263,6 @@ export default function LinksPage() {
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
       <Grid container spacing={4}>
-        {/* Sol taraf - Link Yönetimi */}
         <Grid item xs={12} md={7}>
           {editingLink ? (
             <Card sx={{ mb: 4 }}>
@@ -388,7 +387,6 @@ export default function LinksPage() {
             </Card>
           )}
 
-          {/* Linkler listesi */}
           <Typography variant='h6' gutterBottom sx={{ mt: 4, mb: 2 }}>
             Your Links
           </Typography>
@@ -402,7 +400,6 @@ export default function LinksPage() {
           </DndContext>
         </Grid>
 
-        {/* Sağ taraf - Önizleme */}
         <Grid item xs={12} md={5}>
           <Box sx={{ position: 'sticky', top: 20 }}>
             <Typography variant='h6' gutterBottom>

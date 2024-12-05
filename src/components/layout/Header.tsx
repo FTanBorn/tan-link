@@ -121,19 +121,9 @@ export default function Header() {
                   sx={{
                     color: textColor
                   }}
-                  onClick={() => router.push('/auth/login')}
+                  onClick={() => router.push('/r')}
                 >
                   Login
-                </Button>
-                <Button
-                  variant='contained'
-                  onClick={() => router.push('/auth/register')}
-                  sx={{
-                    boxShadow: 'none',
-                    '&:hover': { boxShadow: 'none' }
-                  }}
-                >
-                  Register
                 </Button>
               </>
             )}

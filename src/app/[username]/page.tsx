@@ -1,114 +1,34 @@
-// src/app/[username]/page.tsx
 'use client'
 import { useState, useEffect, use } from 'react'
 import { Box, Container, Avatar, Typography, Button, Paper, CircularProgress, Alert } from '@mui/material'
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import {
-  Facebook,
-  Instagram,
-  Twitter,
-  LinkedIn,
-  GitHub,
-  YouTube,
-  WhatsApp,
-  Telegram,
-  Language,
-  Mail,
-  Store,
-  Code
-} from '@mui/icons-material'
-
-const linkStyles = {
-  instagram: { color: '#E1306C', bgColor: '#FCE4EC' },
-  github: { color: '#333333', bgColor: '#F5F5F5' },
-  youtube: { color: '#FF0000', bgColor: '#FFEBEE' },
-  whatsapp: { color: '#25D366', bgColor: '#E8F5E9' },
-  twitter: { color: '#1DA1F2', bgColor: '#E3F2FD' },
-  facebook: { color: '#1877F2', bgColor: '#E3F2FD' },
-  website: { color: '#9C27B0', bgColor: '#F3E5F5' },
-  linkedin: { color: '#0077B5', bgColor: '#E3F2FD' },
-  store: { color: '#FF9800', bgColor: '#FFF3E0' },
-  telegram: { color: '#0088cc', bgColor: '#E3F2FD' },
-  email: { color: '#EA4335', bgColor: '#FFEBEE' },
-  portfolio: { color: '#607D8B', bgColor: '#ECEFF1' }
-}
-
-const getIcon = (type: string) => {
-  const icons = {
-    instagram: <Instagram />,
-    github: <GitHub />,
-    youtube: <YouTube />,
-    whatsapp: <WhatsApp />,
-    twitter: <Twitter />,
-    facebook: <Facebook />,
-    website: <Language />,
-    linkedin: <LinkedIn />,
-    store: <Store />,
-    telegram: <Telegram />,
-    email: <Mail />,
-    portfolio: <Code />
-  }
-  return icons[type as keyof typeof icons] || <Language />
-}
+import { platformIcons } from '@/components/tour/steps/LinksStep/constants'
+import { ThemePreset } from '@/types/theme'
 
 interface UserData {
   username: string
   displayName: string
   photoURL?: string
   bio?: string
-  theme?: {
-    backgroundColor: string
-    cardBackground: string
-    textColor: string
-    buttonStyle: {
-      type: string
-      style: {
-        borderRadius?: string
-        background?: string
-        border?: string
-        backdropFilter?: string
-        boxShadow?: string
-      }
-    }
-    backgroundStyle: {
-      type: string
-      value: string
-      overlay?: string
-      blur?: number
-    }
-  }
+  theme?: ThemePreset | null
 }
 
 interface Link {
   id: string
-  type: string
+  platform: keyof typeof platformIcons
   title: string
   url: string
   order: number
 }
 
-interface PageProps {
-  params: Promise<{ username: string }>
+interface FirestoreLink extends Link {
+  createdAt: Date
+  updatedAt: Date
 }
 
-const defaultTheme = {
-  backgroundColor: '#f0f2f5',
-  cardBackground: '#ffffff',
-  textColor: '#000000',
-  buttonStyle: {
-    type: 'solid',
-    style: {
-      borderRadius: '8px',
-      background: 'primary.main'
-    }
-  },
-  backgroundStyle: {
-    type: 'solid',
-    value: '#f0f2f5',
-    overlay: undefined,
-    blur: undefined
-  }
+interface PageProps {
+  params: Promise<{ username: string }>
 }
 
 export default function ProfilePage({ params }: PageProps) {
@@ -118,13 +38,12 @@ export default function ProfilePage({ params }: PageProps) {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [links, setLinks] = useState<Link[]>([])
 
-  const theme = userData?.theme || defaultTheme
+  const theme = userData?.theme || null
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()))
-
         if (!usernameDoc.exists()) {
           setError('Profile not found')
           setLoading(false)
@@ -133,7 +52,6 @@ export default function ProfilePage({ params }: PageProps) {
 
         const userId = usernameDoc.data().uid
         const userDoc = await getDoc(doc(db, 'users', userId))
-
         if (!userDoc.exists()) {
           setError('User not found')
           setLoading(false)
@@ -147,12 +65,9 @@ export default function ProfilePage({ params }: PageProps) {
         const linksData = linksSnapshot.docs
           .map(doc => ({
             id: doc.id,
-            type: doc.data().type,
-            title: doc.data().title,
-            url: doc.data().url,
-            order: doc.data().order || 0
+            ...(doc.data() as Omit<FirestoreLink, 'id'>)
           }))
-          .sort((a, b) => a.order - b.order)
+          .sort((a, b) => (a.order || 0) - (b.order || 0)) as Link[]
 
         setLinks(linksData)
       } catch (err) {
@@ -174,7 +89,7 @@ export default function ProfilePage({ params }: PageProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: theme.backgroundColor
+          background: theme?.backgroundStyle.value || '#f0f2f5'
         }}
       >
         <CircularProgress />
@@ -190,35 +105,26 @@ export default function ProfilePage({ params }: PageProps) {
     )
   }
 
-  const getBackgroundStyles = () => {
-    if (!theme.backgroundStyle) return { bgcolor: theme.backgroundColor }
+  const getButtonStyle = (link: Link) => {
+    const platformInfo = platformIcons[link.platform]
 
-    switch (theme.backgroundStyle.type) {
-      case 'gradient':
-        return { background: theme.backgroundStyle.value }
-      case 'glass':
-        return {
-          bgcolor: 'transparent',
-          backdropFilter: `blur(${theme.backgroundStyle.blur || 10}px)`,
-          background: theme.backgroundStyle.value
+    if (!theme?.buttonStyle || theme.buttonStyle.type === 'default') {
+      return {
+        mb: 2,
+        bgcolor: platformInfo.bgColor,
+        color: platformInfo.color,
+        '&:hover': {
+          bgcolor: platformInfo.color,
+          color: '#fff',
+          transform: 'translateY(-2px)',
+          transition: 'all 0.2s ease'
         }
-      case 'image':
-        return {
-          backgroundImage: `url(${theme.backgroundStyle.value})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: theme.backgroundStyle.overlay
-          }
-        }
-      default:
-        return { bgcolor: theme.backgroundStyle.value || theme.backgroundColor }
+      }
+    }
+
+    return {
+      mb: 2,
+      ...theme.buttonStyle.style
     }
   }
 
@@ -226,7 +132,8 @@ export default function ProfilePage({ params }: PageProps) {
     <Box
       sx={{
         minHeight: '100vh',
-        ...getBackgroundStyles(),
+        background: theme?.backgroundStyle.value || '#f0f2f5',
+        backdropFilter: theme?.backgroundStyle.blur ? `blur(${theme.backgroundStyle.blur}px)` : undefined,
         position: 'relative'
       }}
     >
@@ -237,10 +144,9 @@ export default function ProfilePage({ params }: PageProps) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: theme.buttonStyle?.style?.borderRadius || '16px',
-            bgcolor: theme.cardBackground,
-            color: theme.textColor,
-            ...theme.buttonStyle?.style
+            bgcolor: theme?.cardBackground || '#ffffff',
+            color: theme?.textColor || '#000000',
+            borderRadius: theme?.buttonStyle?.style.borderRadius || '16px'
           }}
         >
           <Avatar
@@ -256,48 +162,31 @@ export default function ProfilePage({ params }: PageProps) {
             {userData?.displayName?.[0]}
           </Avatar>
 
-          <Typography variant='h5' gutterBottom fontWeight='bold' sx={{ color: theme.textColor }}>
+          <Typography variant='h5' gutterBottom fontWeight='bold'>
             {userData?.displayName}
           </Typography>
 
           {userData?.bio && (
-            <Typography
-              sx={{
-                mb: 4,
-                color: theme.textColor,
-                opacity: 0.7
-              }}
-              align='center'
-            >
+            <Typography color='text.secondary' align='center' sx={{ mb: 4, opacity: 0.7 }}>
               {userData.bio}
             </Typography>
           )}
 
           <Box sx={{ width: '100%' }}>
             {links.map(link => {
-              const style = linkStyles[link.type as keyof typeof linkStyles] || linkStyles.website
-
+              const platformInfo = platformIcons[link.platform]
               return (
                 <Button
                   key={link.id}
-                  variant='contained'
                   fullWidth
-                  startIcon={getIcon(link.type)}
+                  variant='contained'
+                  startIcon={platformInfo.icon}
                   href={link.url}
                   target='_blank'
                   rel='noopener noreferrer'
-                  sx={{
-                    mb: 2,
-                    ...theme.buttonStyle?.style,
-                    bgcolor: style.bgColor,
-                    color: style.color,
-                    '&:hover': {
-                      bgcolor: style.color,
-                      color: '#fff'
-                    }
-                  }}
+                  sx={getButtonStyle(link)}
                 >
-                  {link.title}
+                  {link.title || platformInfo.placeholder}
                 </Button>
               )
             })}
@@ -307,7 +196,7 @@ export default function ProfilePage({ params }: PageProps) {
             variant='body2'
             sx={{
               mt: 4,
-              color: theme.textColor,
+              color: theme?.textColor || 'text.secondary',
               opacity: 0.5
             }}
           >

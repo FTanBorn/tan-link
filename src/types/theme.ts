@@ -1,9 +1,9 @@
-// src/types/theme.ts
 interface ButtonStyle {
-  type: 'solid' | 'outline' | 'soft' | 'gradient' | 'rounded' | 'glass'
+  type: string
   style: {
-    borderRadius?: string
-    background?: string
+    borderRadius: string
+    background: string
+    color: string
     border?: string
     backdropFilter?: string
     boxShadow?: string
@@ -11,112 +11,142 @@ interface ButtonStyle {
 }
 
 interface BackgroundStyle {
-  type: 'solid' | 'gradient' | 'pattern' | 'image' | 'glass'
+  type: string
   value: string
-  overlay?: string
   blur?: number
 }
-interface ThemeSettings {
+
+export interface ThemePreset {
+  id: string
+  name: string
   backgroundColor: string
   cardBackground: string
   textColor: string
   buttonStyle: ButtonStyle
   backgroundStyle: BackgroundStyle
-  backgroundImage?: string
 }
 
-const buttonPresets: Record<string, ButtonStyle> = {
-  solid: {
-    type: 'solid',
-    style: {
-      borderRadius: '8px',
-      background: 'primary.main'
-    }
-  },
-  outline: {
-    type: 'outline',
-    style: {
-      borderRadius: '8px',
-      border: '2px solid',
-      background: 'transparent'
-    }
-  },
-  soft: {
-    type: 'soft',
-    style: {
-      borderRadius: '8px',
-      background: 'rgba(var(--primary-rgb), 0.1)'
-    }
-  },
-  gradient: {
-    type: 'gradient',
-    style: {
-      borderRadius: '8px',
-      background: 'linear-gradient(45deg, var(--primary-light) 0%, var(--primary-main) 100%)'
-    }
-  },
-  rounded: {
-    type: 'rounded',
-    style: {
-      borderRadius: '50px',
-      background: 'primary.main'
-    }
-  },
-  glass: {
-    type: 'glass',
-    style: {
-      borderRadius: '8px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      backdropFilter: 'blur(10px)',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-    }
-  }
-}
-
-const backgroundPresets: Record<string, BackgroundStyle> = {
-  solid: {
-    type: 'solid',
-    value: '#f0f2f5'
-  },
-  gradient: {
-    type: 'gradient',
-    value: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)'
-  },
-  pattern: {
-    type: 'pattern',
-    value: 'url("data:image/svg+xml,...")'
-  },
-  image: {
-    type: 'image',
-    value: '',
-    overlay: 'rgba(0,0,0,0.5)'
-  },
-  glass: {
-    type: 'glass',
-    value: 'rgba(255,255,255,0.1)',
-    blur: 10
-  }
-}
-
-const themePresets = [
+export const themePresets: ThemePreset[] = [
   {
+    id: 'modern-light',
     name: 'Modern Light',
     backgroundColor: '#f0f2f5',
     cardBackground: '#ffffff',
     textColor: '#000000',
-    buttonStyle: buttonPresets.gradient,
-    backgroundStyle: backgroundPresets.gradient
+    buttonStyle: {
+      type: 'gradient',
+      style: {
+        borderRadius: '8px',
+        background: 'linear-gradient(45deg, #2196F3, #21CBF3)',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #F0F4FF 0%, #F5F7FF 100%)'
+    }
   },
   {
-    name: 'Glass Dark',
+    id: 'dark-glass',
+    name: 'Dark Glass',
     backgroundColor: '#1a1a1a',
     cardBackground: 'rgba(45,45,45,0.8)',
     textColor: '#ffffff',
-    buttonStyle: buttonPresets.glass,
-    backgroundStyle: backgroundPresets.glass
+    buttonStyle: {
+      type: 'glass',
+      style: {
+        borderRadius: '8px',
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(10px)',
+        color: '#ffffff',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #2C3E50 0%, #000000 100%)',
+      blur: 10
+    }
+  },
+  {
+    id: 'neon-nights',
+    name: 'Neon Nights',
+    backgroundColor: '#0a0a0a',
+    cardBackground: 'rgba(20,20,20,0.9)',
+    textColor: '#ffffff',
+    buttonStyle: {
+      type: 'neon',
+      style: {
+        borderRadius: '8px',
+        background: 'transparent',
+        border: '2px solid #00ff88',
+        color: '#00ff88',
+        boxShadow: '0 0 10px #00ff8855'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)'
+    }
+  },
+  {
+    id: 'pastel-dream',
+    name: 'Pastel Dream',
+    backgroundColor: '#fef6ff',
+    cardBackground: '#ffffff',
+    textColor: '#4a4a4a',
+    buttonStyle: {
+      type: 'soft',
+      style: {
+        borderRadius: '12px',
+        background: '#ffecf8',
+        color: '#d44d9c'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #ffecf8 0%, #f7e5ff 100%)'
+    }
+  },
+  {
+    id: 'ocean-breeze',
+    name: 'Ocean Breeze',
+    backgroundColor: '#e3f2fd',
+    cardBackground: '#ffffff',
+    textColor: '#1e3a5c',
+    buttonStyle: {
+      type: 'gradient',
+      style: {
+        borderRadius: '8px',
+        background: 'linear-gradient(45deg, #4FC3F7, #29B6F6)',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)'
+    }
+  },
+  {
+    id: 'minimal-mono',
+    name: 'Minimal Mono',
+    backgroundColor: '#ffffff',
+    cardBackground: '#fafafa',
+    textColor: '#000000',
+    buttonStyle: {
+      type: 'outline',
+      style: {
+        borderRadius: '4px',
+        background: 'transparent',
+        border: '1px solid #000000',
+        color: '#000000'
+      }
+    },
+    backgroundStyle: {
+      type: 'solid',
+      value: '#ffffff'
+    }
   }
 ]
 
-export type { ButtonStyle, BackgroundStyle, ThemeSettings }
-
-export { buttonPresets, backgroundPresets, themePresets }
+export type { ButtonStyle, BackgroundStyle }

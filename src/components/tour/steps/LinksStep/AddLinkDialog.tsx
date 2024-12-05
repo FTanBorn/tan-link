@@ -1,6 +1,5 @@
-// src/components/tour/steps/LinksStep/AddLinkDialog.tsx
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -12,7 +11,9 @@ import {
   Box,
   Typography,
   IconButton,
-  Paper
+  Paper,
+  useMediaQuery,
+  useTheme
 } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
 import { platformIcons, PlatformType } from './constants'
@@ -20,8 +21,9 @@ import { platformIcons, PlatformType } from './constants'
 interface AddLinkDialogProps {
   open: boolean
   onClose: () => void
-  onAdd: (data: { platform: PlatformType; title: string; url: string }) => void
+  onAdd: (data: { id?: string; platform: PlatformType; title: string; url: string }) => void
   editingLink?: {
+    id: string
     platform: PlatformType
     title: string
     url: string
@@ -29,18 +31,42 @@ interface AddLinkDialogProps {
 }
 
 export default function AddLinkDialog({ open, onClose, onAdd, editingLink }: AddLinkDialogProps) {
-  const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>(editingLink?.platform || 'website')
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>('instagram')
   const [formData, setFormData] = useState({
-    title: editingLink?.title || '',
-    url: editingLink?.url || ''
+    title: '',
+    url: ''
   })
+
+  useEffect(() => {
+    if (open && editingLink) {
+      setSelectedPlatform(editingLink.platform)
+      setFormData({
+        title: editingLink.title || '',
+        url: editingLink.url || ''
+      })
+    } else if (open) {
+      setSelectedPlatform('instagram')
+      setFormData({
+        title: '',
+        url: ''
+      })
+    }
+  }, [open, editingLink])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.url.trim()) {
+      return
+    }
+
     onAdd({
+      ...(editingLink?.id ? { id: editingLink.id } : {}),
       platform: selectedPlatform,
-      title: formData.title,
-      url: formData.url
+      title: formData.title.trim(),
+      url: formData.url.trim()
     })
   }
 
@@ -50,24 +76,31 @@ export default function AddLinkDialog({ open, onClose, onAdd, editingLink }: Add
       onClose={onClose}
       maxWidth='sm'
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
-        sx: { borderRadius: 2 }
+        sx: {
+          borderRadius: isMobile ? 0 : 2,
+          height: isMobile ? '100%' : 'auto'
+        }
       }}
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {editingLink ? 'Edit Link' : 'Add New Link'}
-          <IconButton onClick={onClose} size='small'>
+          <Typography variant='h6' fontWeight='bold'>
+            {editingLink ? 'Edit Link' : 'Add New Link'}
+          </Typography>
+          <IconButton onClick={onClose} size='small' edge='end'>
             <CloseIcon />
           </IconButton>
         </Box>
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
-        <DialogContent>
-          <Typography variant='subtitle2' gutterBottom>
+        <DialogContent dividers>
+          <Typography variant='subtitle2' gutterBottom fontWeight='medium'>
             Choose Platform
           </Typography>
+
           <Grid container spacing={1} sx={{ mb: 3 }}>
             {(Object.keys(platformIcons) as PlatformType[]).map(key => (
               <Grid item xs={4} sm={3} key={key}>
@@ -88,8 +121,23 @@ export default function AddLinkDialog({ open, onClose, onAdd, editingLink }: Add
                     }
                   }}
                 >
-                  <Box sx={{ color: platformIcons[key].color, mb: 1 }}>{platformIcons[key].icon}</Box>
-                  <Typography variant='caption' sx={{ display: 'block' }}>
+                  <Box
+                    sx={{
+                      color: platformIcons[key].color,
+                      mb: 1,
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {platformIcons[key].icon}
+                  </Box>
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      display: 'block',
+                      fontWeight: selectedPlatform === key ? 'bold' : 'normal'
+                    }}
+                  >
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </Typography>
                 </Paper>
@@ -101,7 +149,7 @@ export default function AddLinkDialog({ open, onClose, onAdd, editingLink }: Add
             fullWidth
             label='Title (Optional)'
             value={formData.title}
-            onChange={e => setFormData({ ...formData, title: e.target.value })}
+            onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
             sx={{ mb: 2 }}
           />
 
@@ -109,15 +157,15 @@ export default function AddLinkDialog({ open, onClose, onAdd, editingLink }: Add
             fullWidth
             label='URL'
             value={formData.url}
-            onChange={e => setFormData({ ...formData, url: e.target.value })}
-            required
+            onChange={e => setFormData(prev => ({ ...prev, url: e.target.value }))}
             helperText={`Example: ${platformIcons[selectedPlatform].placeholder}`}
+            required
           />
         </DialogContent>
 
         <DialogActions sx={{ p: 2.5 }}>
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant='contained' type='submit' disabled={!formData.url}>
+          <Button variant='contained' type='submit' disabled={!formData.url.trim()}>
             {editingLink ? 'Save Changes' : 'Add Link'}
           </Button>
         </DialogActions>

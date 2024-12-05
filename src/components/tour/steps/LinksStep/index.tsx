@@ -1,10 +1,20 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Box, Grid, Typography, Button, Alert, CircularProgress } from '@mui/material'
-import { Add as AddIcon } from '@mui/icons-material'
+import {
+  Box,
+  Grid,
+  Typography,
+  Button,
+  Alert,
+  CircularProgress,
+  IconButton,
+  useMediaQuery,
+  useTheme
+} from '@mui/material'
+import { Add as AddIcon, KeyboardArrowUp as UpIcon, KeyboardArrowDown as DownIcon } from '@mui/icons-material'
 import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core'
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { collection, addDoc, getDocs, doc, deleteDoc, writeBatch } from 'firebase/firestore'
+import { collection, addDoc, getDocs, doc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { useTour } from '@/context/TourContext'
@@ -27,7 +37,14 @@ interface AddLinkData {
   url: string
 }
 
+interface FirestoreLink extends Link {
+  createdAt: Date
+  updatedAt: Date
+}
+
 export default function LinksStep() {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { user } = useAuth()
   const { nextStep, prevStep, markStepCompleted } = useTour()
   const [links, setLinks] = useState<Link[]>([])
@@ -53,7 +70,7 @@ export default function LinksStep() {
             ({
               id: doc.id,
               ...doc.data()
-            } as Link)
+            } as FirestoreLink)
         )
         .sort((a, b) => (a.order || 0) - (b.order || 0))
       setLinks(linksData)
@@ -62,6 +79,93 @@ export default function LinksStep() {
       setError('Failed to load links')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const moveLink = async (index: number, direction: 'up' | 'down') => {
+    if (!user) return
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= links.length) return
+
+    const newLinks = [...links]
+    const temp = newLinks[index]
+    newLinks[index] = newLinks[newIndex]
+    newLinks[newIndex] = temp
+
+    setLinks(newLinks)
+
+    const batch = writeBatch(db)
+    newLinks.forEach((link, idx) => {
+      const linkRef = doc(db, `users/${user.uid}/links/${link.id}`)
+      batch.update(linkRef, { order: idx })
+    })
+
+    try {
+      await batch.commit()
+    } catch (err) {
+      console.error('Error updating order:', err)
+      loadLinks()
+    }
+  }
+
+  const handleUpdateLink = async (linkData: AddLinkData & { id?: string }) => {
+    if (!user || !linkData.id) return
+    try {
+      const linkRef = doc(db, `users/${user.uid}/links/${linkData.id}`)
+      await updateDoc(linkRef, {
+        platform: linkData.platform,
+        title: linkData.title,
+        url: linkData.url,
+        updatedAt: new Date()
+      })
+      await loadLinks()
+      setIsDialogOpen(false)
+      setEditingLink(null)
+    } catch (err) {
+      console.error('Error updating link:', err)
+      setError('Failed to update link')
+    }
+  }
+
+  const handleAddLink = async (linkData: AddLinkData) => {
+    if (!user) return
+    try {
+      if (editingLink) {
+        await handleUpdateLink({ ...linkData, id: editingLink.id })
+      } else {
+        await addDoc(collection(db, `users/${user.uid}/links`), {
+          ...linkData,
+          order: links.length,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        await loadLinks()
+        setIsDialogOpen(false)
+      }
+    } catch (err) {
+      console.error('Error adding/updating link:', err)
+      setError('Failed to save link')
+    }
+  }
+
+  const handleDeleteLink = async (id: string) => {
+    if (!user) return
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/links/${id}`))
+
+      // Re-order remaining links
+      const remainingLinks = links.filter(link => link.id !== id)
+      const batch = writeBatch(db)
+      remainingLinks.forEach((link, idx) => {
+        const linkRef = doc(db, `users/${user.uid}/links/${link.id}`)
+        batch.update(linkRef, { order: idx })
+      })
+      await batch.commit()
+
+      await loadLinks()
+    } catch (err) {
+      console.error('Error deleting link:', err)
+      setError('Failed to delete link')
     }
   }
 
@@ -90,33 +194,6 @@ export default function LinksStep() {
     }
   }
 
-  const handleAddLink = async (linkData: AddLinkData) => {
-    if (!user) return
-    try {
-      await addDoc(collection(db, `users/${user.uid}/links`), {
-        ...linkData,
-        order: links.length,
-        createdAt: new Date()
-      })
-      await loadLinks()
-      setIsDialogOpen(false)
-    } catch (err) {
-      console.error('Error adding link:', err)
-      setError('Failed to add link')
-    }
-  }
-
-  const handleDeleteLink = async (id: string) => {
-    if (!user) return
-    try {
-      await deleteDoc(doc(db, `users/${user.uid}/links/${id}`))
-      await loadLinks()
-    } catch (err) {
-      console.error('Error deleting link:', err)
-      setError('Failed to delete link')
-    }
-  }
-
   const handleContinue = () => {
     if (links.length > 0) {
       markStepCompleted('links')
@@ -124,6 +201,51 @@ export default function LinksStep() {
     } else {
       setError('Please add at least one link before continuing')
     }
+  }
+
+  const renderLinks = () => {
+    if (isMobile) {
+      return links.map((link, index) => (
+        <Box key={link.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <IconButton size='small' onClick={() => moveLink(index, 'up')} disabled={index === 0}>
+              <UpIcon />
+            </IconButton>
+            <IconButton size='small' onClick={() => moveLink(index, 'down')} disabled={index === links.length - 1}>
+              <DownIcon />
+            </IconButton>
+          </Box>
+          <Box flexGrow={1}>
+            <SortableLink
+              link={link}
+              onEdit={() => {
+                setEditingLink(link)
+                setIsDialogOpen(true)
+              }}
+              onDelete={() => handleDeleteLink(link.id)}
+            />
+          </Box>
+        </Box>
+      ))
+    }
+
+    return (
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={links.map(link => link.id)} strategy={verticalListSortingStrategy}>
+          {links.map(link => (
+            <SortableLink
+              key={link.id}
+              link={link}
+              onEdit={() => {
+                setEditingLink(link)
+                setIsDialogOpen(true)
+              }}
+              onDelete={() => handleDeleteLink(link.id)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
+    )
   }
 
   if (loading) {
@@ -137,13 +259,12 @@ export default function LinksStep() {
   return (
     <Box>
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }}>
+        <Alert severity='error' sx={{ mb: 2 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
       <Grid container spacing={4}>
-        {/* Links List */}
         <Grid item xs={12} md={7}>
           <Box sx={{ mb: 2 }}>
             <Typography variant='h5' fontWeight='bold'>
@@ -157,29 +278,15 @@ export default function LinksStep() {
           <Button
             variant='contained'
             fullWidth
-            size='small'
+            size='large'
             startIcon={<AddIcon />}
             onClick={() => setIsDialogOpen(true)}
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
           >
             Add New Link
           </Button>
 
-          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={links.map(link => link.id)} strategy={verticalListSortingStrategy}>
-              {links.map(link => (
-                <SortableLink
-                  key={link.id}
-                  link={link}
-                  onEdit={() => {
-                    setEditingLink(link)
-                    setIsDialogOpen(true)
-                  }}
-                  onDelete={() => handleDeleteLink(link.id)}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+          {renderLinks()}
 
           {links.length === 0 && (
             <Box
@@ -202,7 +309,6 @@ export default function LinksStep() {
           )}
         </Grid>
 
-        {/* Preview */}
         <Grid item xs={12} md={5}>
           <Box sx={{ position: 'sticky', top: 20 }}>
             <Typography variant='h6' gutterBottom>
@@ -213,7 +319,6 @@ export default function LinksStep() {
         </Grid>
       </Grid>
 
-      {/* Navigation */}
       <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
         <Button variant='outlined' onClick={prevStep}>
           Back
@@ -223,7 +328,6 @@ export default function LinksStep() {
         </Button>
       </Box>
 
-      {/* Add/Edit Dialog */}
       <AddLinkDialog
         open={isDialogOpen}
         onClose={() => {

@@ -49,7 +49,7 @@ export default function UsernameStep() {
   }
 
   const handleUsernameChange = async (username: string) => {
-    setUsername(username)
+    setUsername(username.toLowerCase())
     const validationError = validateUsername(username)
     if (validationError) {
       setUsernameError(validationError)
@@ -169,7 +169,7 @@ export default function UsernameStep() {
         </Paper>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button size='small' variant='outlined' onClick={prevStep} sx={{ flex: 1 }}>
+          <Button disabled size='small' variant='outlined' onClick={prevStep} sx={{ flex: 1 }}>
             Back
           </Button>
           <Button

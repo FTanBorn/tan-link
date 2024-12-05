@@ -20,7 +20,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useTour } from '@/context/TourContext'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 
 export default function PreviewStep() {
   const theme = useTheme()

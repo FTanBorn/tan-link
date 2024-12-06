@@ -1,7 +1,7 @@
 // src/components/tour/steps/ProfileStep.tsx
 'use client'
 import { useState, useEffect } from 'react'
-import { Box, Typography, TextField, Button, Avatar, IconButton, Alert, CircularProgress, Paper } from '@mui/material'
+import { Box, Typography, TextField, Button, Avatar, IconButton, Alert, CircularProgress } from '@mui/material'
 import { PhotoCamera, Delete as DeleteIcon } from '@mui/icons-material'
 import { useTour } from '@/context/TourContext'
 import { useAuth } from '@/context/AuthContext'

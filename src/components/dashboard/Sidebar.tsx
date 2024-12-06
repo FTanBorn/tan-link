@@ -15,7 +15,6 @@ import {
 import {
   Dashboard as DashboardIcon,
   Link as LinkIcon,
-  Analytics as AnalyticsIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   Share as ShareIcon,

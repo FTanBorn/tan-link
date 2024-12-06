@@ -42,13 +42,39 @@ interface PageProps {
 }
 
 const defaultStyles = {
+  container: {
+    minHeight: '100vh',
+    backgroundColor: '#f0f2f5'
+  },
+  paper: {
+    borderRadius: '24px',
+    backgroundColor: '#ffffff',
+    padding: { xs: 3, sm: 4 }
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    border: '4px solid',
+    borderColor: 'primary.main',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+    marginBottom: 3,
+    transition: 'all 0.3s ease'
+  },
   button: {
-    mb: 2,
-    py: 1.5,
-    borderRadius: 2,
+    marginBottom: 2,
+    padding: '12px 20px',
+    borderRadius: '12px',
     justifyContent: 'center',
     textTransform: 'none',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    fontWeight: 500
+  },
+  shareButton: {
+    backgroundColor: 'background.paper',
+    boxShadow: 1,
+    '&:hover': {
+      backgroundColor: 'background.paper'
+    }
   }
 }
 
@@ -64,7 +90,6 @@ export default function ProfilePage({ params }: PageProps) {
 
   const theme = userData?.theme || null
 
-  // Profile data and analytics recording
   useEffect(() => {
     let isSubscribed = true
 
@@ -108,7 +133,6 @@ export default function ProfilePage({ params }: PageProps) {
 
         setLinks(linksData)
 
-        // Record page view only after successful data fetch
         if (isSubscribed) {
           try {
             await analyticsService.recordPageView(uid, username)
@@ -129,7 +153,6 @@ export default function ProfilePage({ params }: PageProps) {
     }
 
     fetchProfile()
-
     return () => {
       isSubscribed = false
     }
@@ -145,7 +168,6 @@ export default function ProfilePage({ params }: PageProps) {
 
     try {
       await analyticsService.recordLinkClick(userId, username, link.id, link.platform, link.url)
-
       window.open(link.url, '_blank')
     } catch (error) {
       console.error('Error recording click:', error)
@@ -190,10 +212,12 @@ export default function ProfilePage({ params }: PageProps) {
 
     return {
       ...theme.buttonStyle.style,
-      mb: defaultStyles.button.mb,
-      transition: defaultStyles.button.transition,
+      ...defaultStyles.button,
       '&:hover': {
-        transform: 'translateY(-2px)'
+        transform: 'translateY(-2px)',
+        ...(theme.buttonStyle.type === 'glass' && {
+          backgroundColor: 'rgba(255, 255, 255, 0.15)'
+        })
       }
     }
   }
@@ -202,11 +226,11 @@ export default function ProfilePage({ params }: PageProps) {
     return (
       <Box
         sx={{
-          height: '100vh',
+          ...defaultStyles.container,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: theme?.backgroundStyle.value || '#f0f2f5'
+          background: theme?.backgroundStyle.value || defaultStyles.container.backgroundColor
         }}
       >
         <CircularProgress />
@@ -225,36 +249,38 @@ export default function ProfilePage({ params }: PageProps) {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        background: theme?.backgroundStyle.value || '#f0f2f5',
+        ...defaultStyles.container,
+        background: theme?.backgroundStyle.value || defaultStyles.container.backgroundColor,
         backdropFilter: theme?.backgroundStyle.blur ? `blur(${theme.backgroundStyle.blur}px)` : undefined,
-        position: 'relative'
+        transition: 'background-color 0.3s ease'
       }}
     >
       <Container maxWidth='sm' sx={{ py: 4 }}>
         <Paper
-          elevation={theme?.cardBackground === 'transparent' ? 0 : 3}
+          elevation={theme?.buttonStyle.type === 'glass' ? 0 : 3}
           sx={{
-            p: 4,
+            ...defaultStyles.paper,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            bgcolor: theme?.cardBackground || '#ffffff',
-            color: theme?.textColor || '#000000',
-            borderRadius: theme?.buttonStyle?.style.borderRadius || '16px',
+            bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
+            color: theme?.textColor || 'inherit',
+            borderRadius: theme?.buttonStyle?.style.borderRadius || defaultStyles.paper.borderRadius,
             backdropFilter:
-              theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur}px)` : undefined,
-            position: 'relative'
+              theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
+            border: theme?.buttonStyle.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+            position: 'relative',
+            transition: 'all 0.3s ease'
           }}
         >
-          <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
-            <Tooltip title='Copy Link'>
-              <IconButton onClick={handleCopyLink} size='small'>
+          <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 2 }}>
+            <Tooltip title='Copy Link' placement='left'>
+              <IconButton onClick={handleCopyLink} size='small' sx={defaultStyles.shareButton}>
                 <ContentCopyIcon fontSize='small' />
               </IconButton>
             </Tooltip>
-            <Tooltip title='Share Profile'>
-              <IconButton onClick={handleShare} size='small'>
+            <Tooltip title='Share Profile' placement='left'>
+              <IconButton onClick={handleShare} size='small' sx={defaultStyles.shareButton}>
                 <ShareIcon fontSize='small' />
               </IconButton>
             </Tooltip>
@@ -263,27 +289,50 @@ export default function ProfilePage({ params }: PageProps) {
           <Avatar
             src={userData?.photoURL}
             sx={{
-              width: 120,
-              height: 120,
-              mb: 2,
-              border: '4px solid',
-              borderColor: 'primary.main'
+              ...defaultStyles.avatar,
+              borderColor: theme?.buttonStyle.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
+              boxShadow:
+                theme?.buttonStyle.type === 'neon'
+                  ? `0 0 20px ${theme.buttonStyle.style.color}`
+                  : defaultStyles.avatar.boxShadow,
+              bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor
             }}
           >
             {userData?.displayName?.[0]}
           </Avatar>
 
-          <Typography variant='h5' gutterBottom fontWeight='bold'>
+          <Typography
+            variant='h5'
+            gutterBottom
+            fontWeight='bold'
+            sx={{
+              background: theme?.buttonStyle.type === 'gradient' ? theme.buttonStyle.style.background : 'none',
+              WebkitBackgroundClip: theme?.buttonStyle.type === 'gradient' ? 'text' : 'none',
+              WebkitTextFillColor: theme?.buttonStyle.type === 'gradient' ? 'transparent' : 'inherit',
+              color: theme?.textColor
+            }}
+          >
             {userData?.displayName}
           </Typography>
 
           {userData?.bio && (
-            <Typography color='text.secondary' align='center' sx={{ mb: 4, opacity: 0.7 }}>
+            <Typography
+              align='center'
+              sx={{
+                mb: 4,
+                opacity: 0.8,
+                color: theme?.textColor ? `${theme.textColor}CC` : 'text.secondary',
+                maxWidth: '600px',
+                mx: 'auto',
+                lineHeight: 1.6,
+                px: 2
+              }}
+            >
               {userData.bio}
             </Typography>
           )}
 
-          <Box sx={{ width: '100%' }}>
+          <Box sx={{ width: '100%', px: { xs: 1, sm: 2 } }}>
             {links.map(link => {
               const platformInfo = platformIcons[link.platform]
               return (
@@ -307,7 +356,7 @@ export default function ProfilePage({ params }: PageProps) {
               mt: 4,
               pt: 4,
               borderTop: '1px solid',
-              borderColor: 'divider',
+              borderColor: theme?.buttonStyle.type === 'glass' ? 'rgba(255, 255, 255, 0.1)' : 'divider',
               textAlign: 'center'
             }}
           >

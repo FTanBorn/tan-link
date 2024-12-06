@@ -7,10 +7,12 @@ import UsernameStep from './steps/UsernameStep'
 import LinksStep from './steps/LinksStep'
 import ThemeStep from './steps/ThemeStep'
 import PreviewStep from './steps/PreviewStep'
+import ProfileStep from './steps/ProfileStep'
 
 const steps: { id: StepType; title: string }[] = [
   { id: 'register', title: 'Create Account' },
   { id: 'username', title: 'Choose Username' },
+  { id: 'profile', title: 'Setup Profile' },
   { id: 'links', title: 'Add Links' },
   { id: 'theme', title: 'Customize Theme' },
   { id: 'preview', title: 'Preview & Share' }
@@ -25,6 +27,8 @@ export default function TourContainer() {
         return <RegisterStep />
       case 'username':
         return <UsernameStep />
+      case 'profile':
+        return <ProfileStep />
       case 'links':
         return <LinksStep />
       case 'theme':

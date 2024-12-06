@@ -1,4 +1,3 @@
-
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
@@ -6,7 +5,7 @@ import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { useAuth } from './AuthContext'
 import { db } from '@/config/firebase'
 
-export type StepType = 'register' | 'username' | 'links' | 'theme' | 'preview'
+export type StepType = 'register' | 'username' | 'profile' | 'links' | 'theme' | 'preview'
 
 interface TourContextType {
   currentStep: StepType
@@ -18,7 +17,7 @@ interface TourContextType {
   isStepCompleted: (step: StepType) => boolean
 }
 
-const steps: StepType[] = ['register', 'username', 'links', 'theme', 'preview']
+const steps: StepType[] = ['register', 'username', 'profile', 'links', 'theme', 'preview']
 
 const TourContext = createContext<TourContextType | undefined>(undefined)
 
@@ -29,6 +28,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const [stepsCompleted, setStepsCompleted] = useState<Record<StepType, boolean>>({
     register: false,
     username: false,
+    profile: false,
     links: false,
     theme: false,
     preview: false
@@ -43,12 +43,21 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid))
-
         const userData = userDoc.data()
 
         if (!userData?.username) {
           setCurrentStep('username')
           setStepsCompleted(prev => ({ ...prev, register: true }))
+          return
+        }
+
+        if (!userData?.photoURL && !userData?.bio) {
+          setCurrentStep('profile')
+          setStepsCompleted(prev => ({
+            ...prev,
+            register: true,
+            username: true
+          }))
           return
         }
 
@@ -59,6 +68,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         const newStepsCompleted = {
           register: true,
           username: true,
+          profile: !!(userData?.photoURL || userData?.bio),
           links: hasLinks,
           theme: !!userData.theme,
           preview: false

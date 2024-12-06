@@ -19,7 +19,8 @@ import {
   Palette as PaletteIcon,
   Settings as SettingsIcon,
   Share as ShareIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  VerifiedUser as UserIcon
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -36,7 +37,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const menuItems = [
     { title: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard/stats' },
     { title: 'My Links', icon: <LinkIcon />, path: '/dashboard/links' },
-    { title: 'Analytics', icon: <AnalyticsIcon />, path: '/dashboard/analytics' },
+    { title: 'Profile', icon: <UserIcon />, path: '/dashboard/profile' },
     { title: 'Appearance', icon: <PaletteIcon />, path: '/dashboard/appearance' },
     { title: 'Settings', icon: <SettingsIcon />, path: '/dashboard/settings' }
   ]

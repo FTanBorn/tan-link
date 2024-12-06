@@ -2,243 +2,175 @@
 import { useState, useEffect } from 'react'
 import {
   Box,
-  Container,
   Grid,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  IconButton,
   Typography,
-  MenuItem,
-  Tooltip,
-  Divider
+  Button,
+  Alert,
+  CircularProgress,
+  IconButton,
+  useMediaQuery,
+  useTheme
 } from '@mui/material'
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  DragHandle as DragHandleIcon,
-  Edit as EditIcon,
-  Save as SaveIcon,
-  Close as CloseIcon,
-  Instagram,
-  Twitter,
-  LinkedIn,
-  GitHub,
-  YouTube,
-  Facebook,
-  WhatsApp,
-  Telegram,
-  Language,
-  Mail,
-  Store,
-  Code
-} from '@mui/icons-material'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import ProfilePreview from '@/components/home/ProfilePreview'
-import { useAuth } from '@/context/AuthContext'
+import { Add as AddIcon, KeyboardArrowUp as UpIcon, KeyboardArrowDown as DownIcon } from '@mui/icons-material'
+import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core'
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { collection, addDoc, getDocs, doc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  writeBatch
-} from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
+import { platformIcons } from './components/constants'
+import SortableLink from './components/SortableLink'
+import LinkPreview from './components/LinkPreview'
+import AddLinkDialog from './components/AddLinkDialog'
 
-const linkTypes = [
-  { type: 'instagram', icon: <Instagram />, label: 'Instagram' },
-  { type: 'twitter', icon: <Twitter />, label: 'Twitter' },
-  { type: 'linkedin', icon: <LinkedIn />, label: 'LinkedIn' },
-  { type: 'github', icon: <GitHub />, label: 'GitHub' },
-  { type: 'youtube', icon: <YouTube />, label: 'YouTube' },
-  { type: 'facebook', icon: <Facebook />, label: 'Facebook' },
-  { type: 'whatsapp', icon: <WhatsApp />, label: 'WhatsApp' },
-  { type: 'telegram', icon: <Telegram />, label: 'Telegram' },
-  { type: 'website', icon: <Language />, label: 'Website' },
-  { type: 'store', icon: <Store />, label: 'Store' },
-  { type: 'email', icon: <Mail />, label: 'Email' },
-  { type: 'portfolio', icon: <Code />, label: 'Portfolio' }
-]
-
-interface LinkItem {
+interface Link {
   id: string
-  type: string
+  platform: keyof typeof platformIcons
   title: string
   url: string
   order: number
 }
 
-function SortableLink({
-  link,
-  onDelete,
-  onEdit
-}: {
-  link: LinkItem
-  onDelete: (id: string) => void
-  onEdit: (link: LinkItem) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: link.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <Card sx={{ mb: 2 }}>
-        <CardContent
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            '&:last-child': { pb: 2 },
-            minHeight: '60px'
-          }}
-        >
-          <div {...listeners} style={{ cursor: 'move', flexShrink: 0 }}>
-            <DragHandleIcon sx={{ color: 'text.secondary' }} />
-          </div>
-
-          <Box sx={{ flexShrink: 0 }}>{linkTypes.find(t => t.type === link.type)?.icon}</Box>
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              minWidth: 0
-            }}
-          >
-            <Typography variant='subtitle2' noWrap>
-              {link.title || linkTypes.find(t => t.type === link.type)?.label}
-            </Typography>
-            <Typography variant='body2' color='text.secondary' noWrap sx={{ maxWidth: '100%' }}>
-              {link.url}
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              flexShrink: 0
-            }}
-          >
-            <Tooltip title='Edit'>
-              <IconButton onClick={() => onEdit(link)} color='primary'>
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title='Delete'>
-              <IconButton onClick={() => onDelete(link.id)} color='error'>
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </CardContent>
-      </Card>
-    </div>
-  )
+interface AddLinkData {
+  platform: keyof typeof platformIcons
+  title: string
+  url: string
 }
 
-export default function LinksPage() {
-  const { user } = useAuth()
-  const [links, setLinks] = useState<LinkItem[]>([])
-  const [newLink, setNewLink] = useState({
-    type: '',
-    title: '',
-    url: ''
-  })
-  const [editingLink, setEditingLink] = useState<LinkItem | null>(null)
+interface FirestoreLink extends Link {
+  createdAt: Date
+  updatedAt: Date
+}
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
-  )
+export default function LinksStep() {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const { user } = useAuth()
+  const [links, setLinks] = useState<Link[]>([])
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingLink, setEditingLink] = useState<Link | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!user) return
-
-    const q = query(collection(db, `users/${user.uid}/links`), orderBy('order'))
-
-    const unsubscribe = onSnapshot(q, snapshot => {
-      const linksData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as LinkItem[]
-
-      setLinks(linksData)
-    })
-
-    return () => unsubscribe()
+    loadLinks()
   }, [user])
 
-  const handleAddLink = async () => {
-    if (!user || !newLink.type || !newLink.url) return
+  const loadLinks = async () => {
+    if (!user) return
+    setLoading(true)
+    try {
+      const linksRef = collection(db, `users/${user.uid}/links`)
+      const linksSnapshot = await getDocs(linksRef)
+      const linksData = linksSnapshot.docs
+        .map(
+          doc =>
+            ({
+              id: doc.id,
+              ...doc.data()
+            } as FirestoreLink)
+        )
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+      setLinks(linksData)
+    } catch (err) {
+      console.error('Error loading links:', err)
+      setError('Failed to load links')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const moveLink = async (index: number, direction: 'up' | 'down') => {
+    if (!user) return
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= links.length) return
+
+    const newLinks = [...links]
+    const temp = newLinks[index]
+    newLinks[index] = newLinks[newIndex]
+    newLinks[newIndex] = temp
+
+    setLinks(newLinks)
+
+    const batch = writeBatch(db)
+    newLinks.forEach((link, idx) => {
+      const linkRef = doc(db, `users/${user.uid}/links/${link.id}`)
+      batch.update(linkRef, { order: idx })
+    })
 
     try {
-      const linkRef = collection(db, `users/${user.uid}/links`)
-      await addDoc(linkRef, {
-        ...newLink,
-        order: links.length,
-        createdAt: new Date(),
+      await batch.commit()
+    } catch (err) {
+      console.error('Error updating order:', err)
+      loadLinks()
+    }
+  }
+
+  const handleUpdateLink = async (linkData: AddLinkData & { id?: string }) => {
+    if (!user || !linkData.id) return
+    try {
+      const linkRef = doc(db, `users/${user.uid}/links/${linkData.id}`)
+      await updateDoc(linkRef, {
+        platform: linkData.platform,
+        title: linkData.title,
+        url: linkData.url,
         updatedAt: new Date()
       })
+      await loadLinks()
+      setIsDialogOpen(false)
+      setEditingLink(null)
+    } catch (err) {
+      console.error('Error updating link:', err)
+      setError('Failed to update link')
+    }
+  }
 
-      setNewLink({ type: '', title: '', url: '' })
-    } catch (error) {
-      console.error('Error adding link:', error)
+  const handleAddLink = async (linkData: AddLinkData) => {
+    if (!user) return
+    try {
+      if (editingLink) {
+        await handleUpdateLink({ ...linkData, id: editingLink.id })
+      } else {
+        await addDoc(collection(db, `users/${user.uid}/links`), {
+          ...linkData,
+          order: links.length,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        await loadLinks()
+        setIsDialogOpen(false)
+      }
+    } catch (err) {
+      console.error('Error adding/updating link:', err)
+      setError('Failed to save link')
     }
   }
 
   const handleDeleteLink = async (id: string) => {
     if (!user) return
-
     try {
       await deleteDoc(doc(db, `users/${user.uid}/links/${id}`))
-    } catch (error) {
-      console.error('Error deleting link:', error)
-    }
-  }
 
-  const handleEditLink = async () => {
-    if (!user || !editingLink) return
-
-    try {
-      const linkRef = doc(db, `users/${user.uid}/links/${editingLink.id}`)
-      await updateDoc(linkRef, {
-        type: editingLink.type,
-        title: editingLink.title,
-        url: editingLink.url,
-        updatedAt: new Date()
+      // Re-order remaining links
+      const remainingLinks = links.filter(link => link.id !== id)
+      const batch = writeBatch(db)
+      remainingLinks.forEach((link, idx) => {
+        const linkRef = doc(db, `users/${user.uid}/links/${link.id}`)
+        batch.update(linkRef, { order: idx })
       })
+      await batch.commit()
 
-      setEditingLink(null)
-    } catch (error) {
-      console.error('Error updating link:', error)
+      await loadLinks()
+    } catch (err) {
+      console.error('Error deleting link:', err)
+      setError('Failed to delete link')
     }
   }
 
-  const handleDragEnd = async (event: any) => {
-    if (!user || !event.active || !event.over) return
-
+  const handleDragEnd = async (event: DragEndEvent) => {
+    if (!user) return
     const { active, over } = event
-    if (active.id === over.id) return
+    if (!over || active.id === over.id) return
 
     const oldIndex = links.findIndex(link => link.id === active.id)
     const newIndex = links.findIndex(link => link.id === over.id)
@@ -247,7 +179,6 @@ export default function LinksPage() {
     setLinks(newLinks)
 
     const batch = writeBatch(db)
-
     newLinks.forEach((link, index) => {
       const linkRef = doc(db, `users/${user.uid}/links/${link.id}`)
       batch.update(linkRef, { order: index })
@@ -255,149 +186,116 @@ export default function LinksPage() {
 
     try {
       await batch.commit()
-    } catch (error) {
-      console.error('Error updating order:', error)
+    } catch (err) {
+      console.error('Error updating order:', err)
+      loadLinks()
     }
   }
 
+  const renderLinks = () => {
+    if (isMobile) {
+      return links.map((link, index) => (
+        <Box key={link.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <IconButton size='small' onClick={() => moveLink(index, 'up')} disabled={index === 0}>
+              <UpIcon />
+            </IconButton>
+            <IconButton size='small' onClick={() => moveLink(index, 'down')} disabled={index === links.length - 1}>
+              <DownIcon />
+            </IconButton>
+          </Box>
+          <Box flexGrow={1}>
+            <SortableLink
+              link={link}
+              onEdit={() => {
+                setEditingLink(link)
+                setIsDialogOpen(true)
+              }}
+              onDelete={() => handleDeleteLink(link.id)}
+            />
+          </Box>
+        </Box>
+      ))
+    }
+
+    return (
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={links.map(link => link.id)} strategy={verticalListSortingStrategy}>
+          {links.map(link => (
+            <SortableLink
+              key={link.id}
+              link={link}
+              onEdit={() => {
+                setEditingLink(link)
+                setIsDialogOpen(true)
+              }}
+              onDelete={() => handleDeleteLink(link.id)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Box display='flex' justifyContent='center' alignItems='center' height='400px'>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
   return (
-    <Container maxWidth='lg' sx={{ py: 4 }}>
+    <Box>
+      {error && (
+        <Alert severity='error' sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
       <Grid container spacing={4}>
         <Grid item xs={12} md={7}>
-          {editingLink ? (
-            <Card sx={{ mb: 4 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Typography variant='h6'>Edit Link</Typography>
-                  <IconButton onClick={() => setEditingLink(null)}>
-                    <CloseIcon />
-                  </IconButton>
-                </Box>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      select
-                      fullWidth
-                      label='Link Type'
-                      value={editingLink.type}
-                      onChange={e => setEditingLink({ ...editingLink, type: e.target.value })}
-                    >
-                      {linkTypes.map(option => (
-                        <MenuItem key={option.type} value={option.type}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {option.icon}
-                            {option.label}
-                          </Box>
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='Title (Optional)'
-                      value={editingLink.title}
-                      onChange={e => setEditingLink({ ...editingLink, title: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='URL'
-                      value={editingLink.url}
-                      onChange={e => setEditingLink({ ...editingLink, url: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      fullWidth
-                      variant='contained'
-                      onClick={handleEditLink}
-                      startIcon={<SaveIcon />}
-                      sx={{ borderRadius: '20px' }}
-                    >
-                      Save Changes
-                    </Button>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card sx={{ mb: 4 }}>
-              <CardContent>
-                <Typography variant='h6' gutterBottom>
-                  Add New Link
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
+          <Box sx={{ mb: 2 }}>
+            <Typography variant='h5' fontWeight='bold'>
+              Add Your Links
+            </Typography>
+            <Typography variant='subtitle2' color='text.secondary'>
+              Add and organize your social media links
+            </Typography>
+          </Box>
 
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      select
-                      fullWidth
-                      label='Link Type'
-                      value={newLink.type}
-                      onChange={e => setNewLink({ ...newLink, type: e.target.value })}
-                    >
-                      {linkTypes.map(option => (
-                        <MenuItem key={option.type} value={option.type}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {option.icon}
-                            {option.label}
-                          </Box>
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
+          <Button
+            variant='contained'
+            fullWidth
+            size='large'
+            startIcon={<AddIcon />}
+            onClick={() => setIsDialogOpen(true)}
+            sx={{ mb: 3 }}
+          >
+            Add New Link
+          </Button>
 
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='Title (Optional)'
-                      value={newLink.title}
-                      onChange={e => setNewLink({ ...newLink, title: e.target.value })}
-                      placeholder='Enter custom title'
-                    />
-                  </Grid>
+          {renderLinks()}
 
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='URL'
-                      value={newLink.url}
-                      onChange={e => setNewLink({ ...newLink, url: e.target.value })}
-                      placeholder='Enter your link'
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Button
-                      fullWidth
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={handleAddLink}
-                      disabled={!newLink.type || !newLink.url}
-                      sx={{ borderRadius: '20px' }}
-                    >
-                      Add Link
-                    </Button>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+          {links.length === 0 && (
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 8,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                border: '2px dashed',
+                borderColor: 'divider'
+              }}
+            >
+              <Typography color='text.secondary' gutterBottom>
+                No links added yet
+              </Typography>
+              <Button variant='outlined' startIcon={<AddIcon />} onClick={() => setIsDialogOpen(true)}>
+                Add Your First Link
+              </Button>
+            </Box>
           )}
-
-          <Typography variant='h6' gutterBottom sx={{ mt: 4, mb: 2 }}>
-            Your Links
-          </Typography>
-
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={links.map(link => link.id)} strategy={verticalListSortingStrategy}>
-              {links.map(link => (
-                <SortableLink key={link.id} link={link} onDelete={handleDeleteLink} onEdit={setEditingLink} />
-              ))}
-            </SortableContext>
-          </DndContext>
         </Grid>
 
         <Grid item xs={12} md={5}>
@@ -405,10 +303,20 @@ export default function LinksPage() {
             <Typography variant='h6' gutterBottom>
               Preview
             </Typography>
-            <ProfilePreview links={links} />
+            <LinkPreview links={links} />
           </Box>
         </Grid>
       </Grid>
-    </Container>
+
+      <AddLinkDialog
+        open={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false)
+          setEditingLink(null)
+        }}
+        onAdd={handleAddLink}
+        editingLink={editingLink}
+      />
+    </Box>
   )
 }

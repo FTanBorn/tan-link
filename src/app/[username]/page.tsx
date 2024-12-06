@@ -41,6 +41,17 @@ interface PageProps {
   params: Promise<{ username: string }>
 }
 
+const defaultStyles = {
+  button: {
+    mb: 2,
+    py: 1.5,
+    borderRadius: 2,
+    justifyContent: 'center',
+    textTransform: 'none',
+    transition: 'all 0.2s ease'
+  }
+}
+
 export default function ProfilePage({ params }: PageProps) {
   const { username } = use(params)
   const [loading, setLoading] = useState(true)
@@ -163,6 +174,30 @@ export default function ProfilePage({ params }: PageProps) {
     }
   }
 
+  const getButtonStyle = (platformInfo: (typeof platformIcons)[keyof typeof platformIcons]) => {
+    if (!theme?.buttonStyle) {
+      return {
+        ...defaultStyles.button,
+        bgcolor: platformInfo.bgColor,
+        color: platformInfo.color,
+        '&:hover': {
+          bgcolor: platformInfo.color,
+          color: '#fff',
+          transform: 'translateY(-2px)'
+        }
+      }
+    }
+
+    return {
+      ...theme.buttonStyle.style,
+      mb: defaultStyles.button.mb,
+      transition: defaultStyles.button.transition,
+      '&:hover': {
+        transform: 'translateY(-2px)'
+      }
+    }
+  }
+
   if (loading) {
     return (
       <Box
@@ -207,6 +242,8 @@ export default function ProfilePage({ params }: PageProps) {
             bgcolor: theme?.cardBackground || '#ffffff',
             color: theme?.textColor || '#000000',
             borderRadius: theme?.buttonStyle?.style.borderRadius || '16px',
+            backdropFilter:
+              theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur}px)` : undefined,
             position: 'relative'
           }}
         >
@@ -253,20 +290,10 @@ export default function ProfilePage({ params }: PageProps) {
                 <Button
                   key={link.id}
                   fullWidth
-                  variant='contained'
+                  variant={theme?.buttonStyle?.type === 'outline' ? 'outlined' : 'contained'}
                   startIcon={platformInfo.icon}
                   onClick={e => handleLinkClick(e, link)}
-                  sx={{
-                    mb: 2,
-                    bgcolor: platformInfo.bgColor,
-                    color: platformInfo.color,
-                    '&:hover': {
-                      bgcolor: platformInfo.color,
-                      color: '#fff',
-                      transform: 'translateY(-2px)',
-                      transition: 'all 0.2s ease'
-                    }
-                  }}
+                  sx={getButtonStyle(platformInfo)}
                 >
                   {link.title || platformInfo.placeholder}
                 </Button>

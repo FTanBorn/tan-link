@@ -51,7 +51,7 @@ export default function PreviewStep() {
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(profileUrl)
+      await navigator.clipboard.writeText(`tanlink.me/${profileUrl}`)
       setMessage({ type: 'success', text: 'Link copied to clipboard!' })
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to copy link' })

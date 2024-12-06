@@ -181,95 +181,127 @@ export default function ThemeStep() {
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={7}>
-            <Grid container spacing={1}>
-              <DefaultThemeCard selected={selectedTheme === null} onClick={() => handleThemeChange(null)} />
-              {themePresets.map(themeItem => (
-                <Grid item xs={6} sm={6} key={themeItem.id}>
-                  <Card
-                    onClick={() => handleThemeChange(themeItem)}
-                    sx={{
-                      cursor: 'pointer',
-                      height: { xs: 180, md: 220 },
-                      position: 'relative',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      border: selectedTheme?.id === themeItem.id ? 2 : 1,
-                      borderColor: selectedTheme?.id === themeItem.id ? 'primary.main' : 'divider',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: 4
-                      }
-                    }}
-                  >
-                    {selectedTheme?.id === themeItem.id && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 10,
-                          right: 10,
-                          width: 30,
-                          height: 30,
-                          borderRadius: '50%',
-                          bgcolor: 'primary.main',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 1
-                        }}
-                      >
-                        <CheckIcon sx={{ color: 'white' }} />
-                      </Box>
-                    )}
+            <Typography variant='h5' gutterBottom fontWeight='bold'>
+              Choose Your Theme
+            </Typography>
 
-                    <Box
+            <Box
+              sx={{
+                height: { xs: 'calc(100vh - 300px)', md: 'calc(100vh - 400px)' },
+                overflowY: 'auto',
+                pr: 2,
+                mr: -2,
+                '&::-webkit-scrollbar': {
+                  width: '6px'
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent'
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'divider',
+                  borderRadius: '10px'
+                },
+                '&:hover::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'action.hover'
+                }
+              }}
+            >
+              <Grid container spacing={2}>
+                <DefaultThemeCard selected={selectedTheme === null} onClick={() => handleThemeChange(null)} />
+                {themePresets.map(themeItem => (
+                  <Grid item xs={6} sm={6} key={themeItem.id}>
+                    <Card
+                      onClick={() => handleThemeChange(themeItem)}
                       sx={{
-                        height: '60%',
-                        background: themeItem.backgroundStyle.value,
-                        px: 2,
-                        py: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        cursor: 'pointer',
+                        height: { xs: 180, md: 220 },
+                        position: 'relative',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        border: selectedTheme?.id === themeItem.id ? 2 : 1,
+                        borderColor: selectedTheme?.id === themeItem.id ? 'primary.main' : 'divider',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: 4
+                        }
                       }}
                     >
+                      {selectedTheme?.id === themeItem.id && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 10,
+                            right: 10,
+                            width: 30,
+                            height: 30,
+                            borderRadius: '50%',
+                            bgcolor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 1,
+                            boxShadow: 1
+                          }}
+                        >
+                          <CheckIcon sx={{ color: 'white' }} />
+                        </Box>
+                      )}
+
                       <Box
                         sx={{
-                          width: '80%',
-                          height: '100%',
-                          bgcolor: themeItem.cardBackground,
-                          borderRadius: themeItem.buttonStyle.style.borderRadius,
-                          p: 2,
+                          height: '60%',
+                          background: themeItem.backgroundStyle.value,
+                          backdropFilter: themeItem.backgroundStyle.blur
+                            ? `blur(${themeItem.backgroundStyle.blur}px)`
+                            : undefined,
+                          px: 2,
+                          py: 1,
                           display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
-                        {[...Array(2)].map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              height: 24,
-                              ...themeItem.buttonStyle.style,
-                              '&:hover': undefined
-                            }}
-                          />
-                        ))}
+                        <Box
+                          sx={{
+                            width: '80%',
+                            height: '100%',
+                            bgcolor: themeItem.cardBackground,
+                            borderRadius: themeItem.buttonStyle.style.borderRadius,
+                            p: 2,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {[...Array(2)].map((_, i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                height: 24,
+                                ...themeItem.buttonStyle.style,
+                                '&:hover': undefined
+                              }}
+                            />
+                          ))}
+                        </Box>
                       </Box>
-                    </Box>
 
-                    <CardContent>
-                      <Typography
-                        align='center'
-                        sx={{
-                          fontWeight: selectedTheme?.id === themeItem.id ? 'bold' : 'medium'
-                        }}
-                      >
-                        {themeItem.name}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                      <CardContent>
+                        <Typography
+                          align='center'
+                          sx={{
+                            fontWeight: selectedTheme?.id === themeItem.id ? 'bold' : 'medium',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          {themeItem.name}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
           </Grid>
 
           {!isMobile && (

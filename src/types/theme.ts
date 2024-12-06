@@ -1,5 +1,8 @@
+export type ButtonStyleType = 'solid' | 'outline' | 'soft' | 'gradient' | 'neon' | 'glass'
+export type BackgroundStyleType = 'solid' | 'gradient' | 'glass'
+
 interface ButtonStyle {
-  type: string
+  type: ButtonStyleType
   style: {
     borderRadius: string
     background: string
@@ -11,7 +14,7 @@ interface ButtonStyle {
 }
 
 interface BackgroundStyle {
-  type: string
+  type: BackgroundStyleType
   value: string
   blur?: number
 }
@@ -145,6 +148,161 @@ export const themePresets: ThemePreset[] = [
     backgroundStyle: {
       type: 'solid',
       value: '#ffffff'
+    }
+  },
+  {
+    id: 'sunset-bliss',
+    name: 'Sunset Bliss',
+    backgroundColor: '#ffecd2',
+    cardBackground: '#ffffff',
+    textColor: '#5d4037',
+    buttonStyle: {
+      type: 'gradient',
+      style: {
+        borderRadius: '12px',
+        background: 'linear-gradient(45deg, #FF7E5F, #FEB47B)',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)'
+    }
+  },
+  {
+    id: 'forest-haven',
+    name: 'Forest Haven',
+    backgroundColor: '#e8f5e9',
+    cardBackground: '#ffffff',
+    textColor: '#2e7d32',
+    buttonStyle: {
+      type: 'solid',
+      style: {
+        borderRadius: '10px',
+        background: '#81c784',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'solid',
+      value: '#e8f5e9'
+    }
+  },
+  {
+    id: 'crimson-flare',
+    name: 'Crimson Flare',
+    backgroundColor: '#ffebee',
+    cardBackground: '#ffffff',
+    textColor: '#c62828',
+    buttonStyle: {
+      type: 'outline',
+      style: {
+        borderRadius: '6px',
+        background: 'transparent',
+        border: '2px solid #e57373',
+        color: '#e57373'
+      }
+    },
+    backgroundStyle: {
+      type: 'solid',
+      value: '#ffebee'
+    }
+  },
+  {
+    id: 'midnight-blues',
+    name: 'Midnight Blues',
+    backgroundColor: '#263238',
+    cardBackground: '#37474f',
+    textColor: '#ffffff',
+    buttonStyle: {
+      type: 'solid',
+      style: {
+        borderRadius: '8px',
+        background: '#455a64',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'solid',
+      value: '#263238'
+    }
+  },
+  {
+    id: 'amber-wave',
+    name: 'Amber Wave',
+    backgroundColor: '#fff8e1',
+    cardBackground: '#ffffff',
+    textColor: '#6d4c41',
+    buttonStyle: {
+      type: 'soft',
+      style: {
+        borderRadius: '10px',
+        background: '#ffe082',
+        color: '#6d4c41'
+      }
+    },
+    backgroundStyle: {
+      type: 'solid',
+      value: '#fff8e1'
+    }
+  },
+  {
+    id: 'icy-calm',
+    name: 'Icy Calm',
+    backgroundColor: '#e3f2fd',
+    cardBackground: '#ffffff',
+    textColor: '#1e88e5',
+    buttonStyle: {
+      type: 'gradient',
+      style: {
+        borderRadius: '6px',
+        background: 'linear-gradient(45deg, #64b5f6, #42a5f5)',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #bbdefb 0%, #e3f2fd 100%)'
+    }
+  },
+  {
+    id: 'cosmic-dream',
+    name: 'Cosmic Dream',
+    backgroundColor: '#2d2d44',
+    cardBackground: '#3e3e5a',
+    textColor: '#ffffff',
+    buttonStyle: {
+      type: 'neon',
+      style: {
+        borderRadius: '10px',
+        background: 'transparent',
+        border: '2px solid #7c4dff',
+        color: '#7c4dff',
+        boxShadow: '0 0 10px #7c4dff55'
+      }
+    },
+    backgroundStyle: {
+      type: 'solid',
+      value: '#2d2d44'
+    }
+  },
+  {
+    id: 'golden-hour',
+    name: 'Golden Hour',
+    backgroundColor: '#fffde7',
+    cardBackground: '#ffffff',
+    textColor: '#f57f17',
+    buttonStyle: {
+      type: 'gradient',
+      style: {
+        borderRadius: '8px',
+        background: 'linear-gradient(45deg, #ffb74d, #ffa726)',
+        color: '#ffffff'
+      }
+    },
+    backgroundStyle: {
+      type: 'gradient',
+      value: 'linear-gradient(135deg, #fff9c4 0%, #ffecb3 100%)'
     }
   }
 ]

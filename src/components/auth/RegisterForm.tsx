@@ -100,7 +100,7 @@ export default function RegisterPage() {
         uid: userCredential.user.uid
       })
 
-      router.push('/dashboard')
+      router.push('/dashboard/stats')
     } catch (error: any) {
       setError(error.message)
     } finally {

@@ -1,10 +1,25 @@
+// src/app/[username]/page.tsx
 'use client'
 import { useState, useEffect, use } from 'react'
-import { Box, Container, Avatar, Typography, Button, Paper, CircularProgress, Alert } from '@mui/material'
+import {
+  Box,
+  Container,
+  Avatar,
+  Typography,
+  Button,
+  Paper,
+  CircularProgress,
+  Alert,
+  Tooltip,
+  IconButton,
+  Snackbar
+} from '@mui/material'
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import { ContentCopy as ContentCopyIcon, Share as ShareIcon } from '@mui/icons-material'
 import { platformIcons } from '@/components/tour/steps/LinksStep/constants'
 import { ThemePreset } from '@/types/theme'
+import { analyticsService } from '@/services/analytics'
 
 interface UserData {
   username: string
@@ -22,11 +37,6 @@ interface Link {
   order: number
 }
 
-interface FirestoreLink extends Link {
-  createdAt: Date
-  updatedAt: Date
-}
-
 interface PageProps {
   params: Promise<{ username: string }>
 }
@@ -37,10 +47,16 @@ export default function ProfilePage({ params }: PageProps) {
   const [error, setError] = useState('')
   const [userData, setUserData] = useState<UserData | null>(null)
   const [links, setLinks] = useState<Link[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [copySnackbar, setCopySnackbar] = useState(false)
+  const [shareSnackbar, setShareSnackbar] = useState(false)
 
   const theme = userData?.theme || null
 
+  // Profile data and analytics recording
   useEffect(() => {
+    let isSubscribed = true
+
     const fetchProfile = async () => {
       try {
         const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()))
@@ -50,36 +66,102 @@ export default function ProfilePage({ params }: PageProps) {
           return
         }
 
-        const userId = usernameDoc.data().uid
-        const userDoc = await getDoc(doc(db, 'users', userId))
+        const uid = usernameDoc.data().uid
+        if (!isSubscribed) return
+        setUserId(uid)
+
+        const userDoc = await getDoc(doc(db, 'users', uid))
         if (!userDoc.exists()) {
           setError('User not found')
           setLoading(false)
           return
         }
 
+        if (!isSubscribed) return
         setUserData(userDoc.data() as UserData)
 
-        const linksRef = collection(db, `users/${userId}/links`)
+        const linksRef = collection(db, `users/${uid}/links`)
         const linksSnapshot = await getDocs(linksRef)
+
+        if (!isSubscribed) return
         const linksData = linksSnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...(doc.data() as Omit<FirestoreLink, 'id'>)
-          }))
-          .sort((a, b) => (a.order || 0) - (b.order || 0)) as Link[]
+          .map(
+            doc =>
+              ({
+                id: doc.id,
+                ...doc.data(),
+                order: doc.data().order || 0
+              } as Link)
+          )
+          .sort((a, b) => a.order - b.order)
 
         setLinks(linksData)
+
+        // Record page view only after successful data fetch
+        if (isSubscribed) {
+          try {
+            await analyticsService.recordPageView(uid, username)
+          } catch (error) {
+            console.error('Error recording page view:', error)
+          }
+        }
       } catch (err) {
         console.error('Error loading profile:', err)
-        setError('Error loading profile')
+        if (isSubscribed) {
+          setError('Error loading profile')
+        }
       } finally {
-        setLoading(false)
+        if (isSubscribed) {
+          setLoading(false)
+        }
       }
     }
 
     fetchProfile()
+
+    return () => {
+      isSubscribed = false
+    }
   }, [username])
+
+  const handleLinkClick = async (e: React.MouseEvent, link: Link) => {
+    e.preventDefault()
+
+    if (!userId) {
+      window.open(link.url, '_blank')
+      return
+    }
+
+    try {
+      await analyticsService.recordLinkClick(userId, username, link.id, link.platform, link.url)
+
+      window.open(link.url, '_blank')
+    } catch (error) {
+      console.error('Error recording click:', error)
+      window.open(link.url, '_blank')
+    }
+  }
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href)
+    setCopySnackbar(true)
+  }
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${userData?.displayName}'s Profile`,
+          url: window.location.href
+        })
+        setShareSnackbar(true)
+      } else {
+        handleCopyLink()
+      }
+    } catch (error) {
+      console.error('Error sharing:', error)
+    }
+  }
 
   if (loading) {
     return (
@@ -105,29 +187,6 @@ export default function ProfilePage({ params }: PageProps) {
     )
   }
 
-  const getButtonStyle = (link: Link) => {
-    const platformInfo = platformIcons[link.platform]
-
-    if (!theme?.buttonStyle || theme.buttonStyle.type === 'default') {
-      return {
-        mb: 2,
-        bgcolor: platformInfo.bgColor,
-        color: platformInfo.color,
-        '&:hover': {
-          bgcolor: platformInfo.color,
-          color: '#fff',
-          transform: 'translateY(-2px)',
-          transition: 'all 0.2s ease'
-        }
-      }
-    }
-
-    return {
-      mb: 2,
-      ...theme.buttonStyle.style
-    }
-  }
-
   return (
     <Box
       sx={{
@@ -139,6 +198,7 @@ export default function ProfilePage({ params }: PageProps) {
     >
       <Container maxWidth='sm' sx={{ py: 4 }}>
         <Paper
+          elevation={theme?.cardBackground === 'transparent' ? 0 : 3}
           sx={{
             p: 4,
             display: 'flex',
@@ -146,9 +206,23 @@ export default function ProfilePage({ params }: PageProps) {
             alignItems: 'center',
             bgcolor: theme?.cardBackground || '#ffffff',
             color: theme?.textColor || '#000000',
-            borderRadius: theme?.buttonStyle?.style.borderRadius || '16px'
+            borderRadius: theme?.buttonStyle?.style.borderRadius || '16px',
+            position: 'relative'
           }}
         >
+          <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
+            <Tooltip title='Copy Link'>
+              <IconButton onClick={handleCopyLink} size='small'>
+                <ContentCopyIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='Share Profile'>
+              <IconButton onClick={handleShare} size='small'>
+                <ShareIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
           <Avatar
             src={userData?.photoURL}
             sx={{
@@ -181,16 +255,25 @@ export default function ProfilePage({ params }: PageProps) {
                   fullWidth
                   variant='contained'
                   startIcon={platformInfo.icon}
-                  href={link.url}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  sx={getButtonStyle(link)}
+                  onClick={e => handleLinkClick(e, link)}
+                  sx={{
+                    mb: 2,
+                    bgcolor: platformInfo.bgColor,
+                    color: platformInfo.color,
+                    '&:hover': {
+                      bgcolor: platformInfo.color,
+                      color: '#fff',
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.2s ease'
+                    }
+                  }}
                 >
                   {link.title || platformInfo.placeholder}
                 </Button>
               )
             })}
           </Box>
+
           <Box
             sx={{
               width: '100%',
@@ -230,6 +313,19 @@ export default function ProfilePage({ params }: PageProps) {
           </Box>
         </Paper>
       </Container>
+
+      <Snackbar
+        open={copySnackbar}
+        autoHideDuration={2000}
+        onClose={() => setCopySnackbar(false)}
+        message='Link copied to clipboard'
+      />
+      <Snackbar
+        open={shareSnackbar}
+        autoHideDuration={2000}
+        onClose={() => setShareSnackbar(false)}
+        message='Thanks for sharing!'
+      />
     </Box>
   )
 }

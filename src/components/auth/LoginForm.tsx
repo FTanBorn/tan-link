@@ -57,7 +57,7 @@ export default function LoginPage() {
       if (!userDoc.exists() || !userDoc.data().username) {
         router.push('/auth/setup-username')
       } else {
-        router.push('/dashboard')
+        router.push('/dashboard/stats')
       }
     } catch (error: any) {
       setError(error.message)

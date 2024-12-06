@@ -34,7 +34,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const { user } = useAuth()
 
   const menuItems = [
-    { title: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    { title: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard/stats' },
     { title: 'My Links', icon: <LinkIcon />, path: '/dashboard/links' },
     { title: 'Analytics', icon: <AnalyticsIcon />, path: '/dashboard/analytics' },
     { title: 'Appearance', icon: <PaletteIcon />, path: '/dashboard/appearance' },

@@ -106,7 +106,7 @@ export default function Header() {
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose} TransitionComponent={Fade}>
                   <MenuItem
                     onClick={() => {
-                      router.push('/dashboard')
+                      router.push('/dashboard/stats')
                       handleClose()
                     }}
                   >

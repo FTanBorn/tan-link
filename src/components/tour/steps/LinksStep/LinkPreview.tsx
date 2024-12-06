@@ -22,8 +22,6 @@ export default function LinkPreview({ links }: LinkPreviewProps) {
   const { user } = useAuth()
   const [username, setUsername] = useState<string | null>(null)
 
-  console.log(user)
-
   useEffect(() => {
     const fetchUsername = async () => {
       if (!user) return

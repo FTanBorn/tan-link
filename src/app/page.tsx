@@ -74,7 +74,7 @@ export default function Home() {
                     </Button>
                   </>
                 ) : (
-                  <Button variant='contained' size='large' onClick={() => router.push('/dashboard')}>
+                  <Button variant='contained' size='large' onClick={() => router.push('/dashboard/stats')}>
                     Go to Dashboard
                   </Button>
                 )}

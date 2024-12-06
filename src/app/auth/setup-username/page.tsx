@@ -33,7 +33,7 @@ export default function SetupUsername() {
     const checkExistingUsername = async () => {
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       if (userDoc.exists() && userDoc.data().username) {
-        router.push('/dashboard')
+        router.push('/dashboard/stats')
       }
     }
 
@@ -102,7 +102,7 @@ export default function SetupUsername() {
         uid: user.uid
       })
 
-      router.push('/dashboard')
+      router.push('/dashboard/stats')
     } catch (error: any) {
       setError(error.message)
     } finally {

@@ -163,7 +163,7 @@ export default function PreviewStep() {
                 fullWidth
                 variant='contained'
                 color='success'
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/dashboard/stats')}
                 startIcon={<Dashboard />}
                 size={isMobile ? 'large' : 'medium'}
               >

@@ -71,7 +71,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         } else if (!userData.theme) {
           setCurrentStep('theme')
         } else {
-          router.push('/dashboard')
+          router.push('/dashboard/stats')
         }
       } catch (error) {
         console.error('Error checking user progress:', error)

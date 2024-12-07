@@ -1,10 +1,10 @@
 // src/app/dashboard/layout.tsx
 'use client'
-
 import { useState } from 'react'
 import { Box, Drawer, IconButton, useMediaQuery, useTheme } from '@mui/material'
 import { Menu as MenuIcon } from '@mui/icons-material'
 import Sidebar from '@/components/dashboard/Sidebar'
+import DashboardHeader from '@/components/dashboard/DashboardHeader'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const theme = useTheme()
@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {/* Mobile menu button */}
       {isMobile && (
         <IconButton
           color='inherit'
@@ -40,6 +41,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </IconButton>
       )}
 
+      {/* Dashboard Header */}
+      <DashboardHeader />
+
+      {/* Sidebar for mobile */}
       <Drawer
         variant='temporary'
         open={mobileOpen}
@@ -57,6 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar onClose={() => setMobileOpen(false)} />
       </Drawer>
 
+      {/* Sidebar for desktop */}
       <Drawer
         variant='permanent'
         sx={{
@@ -74,6 +80,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar />
       </Drawer>
 
+      {/* Main content */}
       <Box
         component='main'
         sx={{
@@ -81,7 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          minHeight: '100vh'
+          mt: '64px', // Header yüksekliği için
+          minHeight: 'calc(100vh - 64px)' // Header yüksekliğini çıkardık
         }}
       >
         {children}

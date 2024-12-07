@@ -49,7 +49,7 @@ const defaultStyles = {
   paper: {
     borderRadius: '24px',
     backgroundColor: '#ffffff',
-    padding: { xs: 3, sm: 4 }
+    padding: { xs: 2, sm: 4 }
   },
   avatar: {
     width: 120,
@@ -255,7 +255,7 @@ export default function ProfilePage({ params }: PageProps) {
         transition: 'background-color 0.3s ease'
       }}
     >
-      <Container maxWidth='sm' sx={{ py: 4 }}>
+      <Container maxWidth='sm' sx={{ py: 4}}>
         <Paper
           elevation={theme?.buttonStyle.type === 'glass' ? 0 : 3}
           sx={{
@@ -270,7 +270,7 @@ export default function ProfilePage({ params }: PageProps) {
               theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
             border: theme?.buttonStyle.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
             position: 'relative',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
           }}
         >
           <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 2 }}>
@@ -332,7 +332,7 @@ export default function ProfilePage({ params }: PageProps) {
             </Typography>
           )}
 
-          <Box sx={{ width: '100%', px: { xs: 1, sm: 2 } }}>
+          <Box sx={{ width: '100%', px: { xs: 0, sm: 2 } }}>
             {links.map(link => {
               const platformInfo = platformIcons[link.platform]
               return (

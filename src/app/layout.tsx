@@ -8,7 +8,7 @@ import Header from '@/components/layout/Header'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  const hideHeader = /^\/[^\/]+\/?$/.test(pathname)
+  const hideHeader = /^\/[^\/]+\/?$|^\/dashboard(\/.*)?\/?$/.test(pathname)
 
   return (
     <html lang='en'>

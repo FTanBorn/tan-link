@@ -19,8 +19,7 @@ import {
   Add as AddIcon,
   KeyboardArrowUp as UpIcon,
   KeyboardArrowDown as DownIcon,
-  RemoveRedEye as PreviewIcon,
-  DragIndicator as DragIcon
+  RemoveRedEye as PreviewIcon
 } from '@mui/icons-material'
 import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core'
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'

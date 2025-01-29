@@ -1,4 +1,3 @@
-// src/app/[username]/page.tsx
 'use client'
 import { useState, useEffect, use } from 'react'
 import {
@@ -127,7 +126,7 @@ export default function ProfilePage({ params }: PageProps) {
                 id: doc.id,
                 ...doc.data(),
                 order: doc.data().order || 0
-              } as Link)
+              }) as Link
           )
           .sort((a, b) => a.order - b.order)
 
@@ -158,21 +157,20 @@ export default function ProfilePage({ params }: PageProps) {
     }
   }, [username])
 
-  const handleLinkClick = async (e: React.MouseEvent, link: Link) => {
-    e.preventDefault()
-
+  const handleLinkClick = (e: React.MouseEvent, link: Link) => {
     if (!userId) {
-      window.open(link.url, '_blank')
-      return
+      return true
     }
 
     try {
-      await analyticsService.recordLinkClick(userId, username, link.id, link.platform, link.url)
-      window.open(link.url, '_blank')
+      analyticsService
+        .recordLinkClick(userId, username, link.id, link.platform, link.url)
+        .catch(error => console.error('Error recording click:', error))
     } catch (error) {
-      console.error('Error recording click:', error)
-      window.open(link.url, '_blank')
+      console.error('Error initiating click recording:', error)
     }
+
+    return true
   }
 
   const handleCopyLink = () => {
@@ -255,7 +253,7 @@ export default function ProfilePage({ params }: PageProps) {
         transition: 'background-color 0.3s ease'
       }}
     >
-      <Container maxWidth='sm' sx={{ py: 4}}>
+      <Container maxWidth='sm' sx={{ py: 4 }}>
         <Paper
           elevation={theme?.buttonStyle.type === 'glass' ? 0 : 3}
           sx={{
@@ -270,7 +268,7 @@ export default function ProfilePage({ params }: PageProps) {
               theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
             border: theme?.buttonStyle.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
             position: 'relative',
-            transition: 'all 0.3s ease',
+            transition: 'all 0.3s ease'
           }}
         >
           <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 2 }}>
@@ -338,6 +336,10 @@ export default function ProfilePage({ params }: PageProps) {
               return (
                 <Button
                   key={link.id}
+                  component='a'
+                  href={link.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
                   fullWidth
                   variant={theme?.buttonStyle?.type === 'outline' ? 'outlined' : 'contained'}
                   startIcon={platformInfo.icon}

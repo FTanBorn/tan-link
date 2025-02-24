@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import {
   Box,
   Container,
@@ -11,14 +11,27 @@ import {
   Alert,
   Tooltip,
   IconButton,
-  Snackbar
+  Snackbar,
+  Fade,
+  Dialog,
+  DialogContent,
+  Link
 } from '@mui/material'
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import { ContentCopy as ContentCopyIcon, Share as ShareIcon } from '@mui/icons-material'
+import {
+  ContentCopy as ContentCopyIcon,
+  Share as ShareIcon,
+  QrCode as QrCodeIcon,
+  WhatsApp as WhatsAppIcon,
+  Email as EmailIcon,
+  Download as DownloadIcon,
+  Close as CloseIcon
+} from '@mui/icons-material'
 import { platformIcons } from '@/components/tour/steps/LinksStep/constants'
 import { ThemePreset } from '@/types/theme'
 import { analyticsService } from '@/services/analytics'
+import { QRCodeCanvas } from 'qrcode.react'
 
 interface UserData {
   username: string
@@ -40,15 +53,117 @@ interface PageProps {
   params: Promise<{ username: string }>
 }
 
+// QR kod indirme fonksiyonu
+const downloadQRCode = (qrCodeRef: React.RefObject<HTMLDivElement>, username: string) => {
+  if (!qrCodeRef.current) return
+
+  const canvas = qrCodeRef.current.querySelector('canvas')
+  if (!canvas) return
+
+  // Canvas'ı bir PNG'ye dönüştür
+  const dataUrl = canvas.toDataURL('image/png')
+
+  // Tarayıcıda bir indirme bağlantısı oluştur
+  const link = document.createElement('a')
+  link.href = dataUrl
+  link.download = `${username}-qrcode.png`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+// Modal QR kod bileşeni
+const QRCodeModal = ({
+  open,
+  onClose,
+  url,
+  username
+}: {
+  open: boolean
+  onClose: () => void
+  url: string
+  username: string
+}) => {
+  const qrCodeRef = useRef<HTMLDivElement>(null)
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth='xs'
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
+        }
+      }}
+    >
+      <DialogContent sx={{ p: 3, textAlign: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0 }}>
+          <IconButton
+            onClick={onClose}
+            size='small'
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8
+            }}
+          >
+            <CloseIcon fontSize='small' />
+          </IconButton>
+        </Box>
+
+        <Typography variant='h6' sx={{ mt: 1, fontWeight: 500 }}>
+          Scan QR Code
+        </Typography>
+
+        <Box
+          ref={qrCodeRef}
+          sx={{
+            mt: 2,
+            mb: 3,
+            display: 'flex',
+            justifyContent: 'center',
+            '& canvas': {
+              borderRadius: 2,
+              border: '1px solid #eaeaea'
+            }
+          }}
+        >
+          <QRCodeCanvas value={url} size={200} level='H' includeMargin={true} />
+        </Box>
+
+        <Button
+          variant='contained'
+          startIcon={<DownloadIcon />}
+          onClick={() => downloadQRCode(qrCodeRef, username)}
+          fullWidth
+          sx={{
+            borderRadius: 2,
+            py: 1,
+            textTransform: 'none',
+            fontWeight: 500
+          }}
+        >
+          Download QR Code
+        </Button>
+      </DialogContent>
+    </Dialog>
+  )
+}
 const defaultStyles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f0f2f5'
+    backgroundColor: '#f0f2f5',
+    transition: 'all 0.5s ease'
   },
   paper: {
     borderRadius: '24px',
     backgroundColor: '#ffffff',
-    padding: { xs: 2, sm: 4 }
+    padding: { xs: 2, sm: 4 },
+    transition: 'all 0.3s ease',
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
   },
   avatar: {
     width: 120,
@@ -72,7 +187,8 @@ const defaultStyles = {
     backgroundColor: 'background.paper',
     boxShadow: 1,
     '&:hover': {
-      backgroundColor: 'background.paper'
+      backgroundColor: 'background.paper',
+      transform: 'translateY(-2px)'
     }
   }
 }
@@ -86,6 +202,8 @@ export default function ProfilePage({ params }: PageProps) {
   const [userId, setUserId] = useState<string | null>(null)
   const [copySnackbar, setCopySnackbar] = useState(false)
   const [shareSnackbar, setShareSnackbar] = useState(false)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
+  const [pageLoaded, setPageLoaded] = useState(false)
 
   const theme = userData?.theme || null
 
@@ -141,6 +259,11 @@ export default function ProfilePage({ params }: PageProps) {
             console.error('Error recording page view:', error)
           }
         }
+
+        // Sayfa yüklendikten sonra animasyon için
+        setTimeout(() => {
+          if (isSubscribed) setPageLoaded(true)
+        }, 100)
       } catch (err) {
         console.error('Error loading profile:', err)
         if (isSubscribed) {
@@ -160,6 +283,13 @@ export default function ProfilePage({ params }: PageProps) {
   }, [username])
 
   const handleLinkClick = (e: React.MouseEvent, link: Link) => {
+    // Tıklama feedback efekti
+    const button = e.currentTarget as HTMLElement
+    button.style.transform = 'scale(0.98)'
+    setTimeout(() => {
+      button.style.transform = 'scale(1)'
+    }, 100)
+
     if (!userId) {
       return true
     }
@@ -196,16 +326,48 @@ export default function ProfilePage({ params }: PageProps) {
     }
   }
 
+  const handleWhatsAppShare = () => {
+    const text = `Check out ${userData?.displayName}'s profile: `
+    const url = encodeURIComponent(window.location.href)
+    window.open(`https://wa.me/?text=${text}${url}`, '_blank')
+  }
+
+  const handleEmailShare = () => {
+    const subject = `Check out ${userData?.displayName}'s profile`
+    const body = `I thought you might like this profile: ${window.location.href}`
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`)
+  }
+
   const getButtonStyle = (platformInfo: (typeof platformIcons)[keyof typeof platformIcons]) => {
     if (!theme?.buttonStyle) {
       return {
         ...defaultStyles.button,
         bgcolor: platformInfo.bgColor,
         color: platformInfo.color,
+        position: 'relative',
+        overflow: 'hidden',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: platformInfo.color,
+          opacity: 0,
+          transition: 'opacity 0.3s ease',
+          zIndex: 0
+        },
+        '& > *': {
+          zIndex: 1,
+          position: 'relative'
+        },
         '&:hover': {
-          bgcolor: platformInfo.color,
+          transform: 'translateY(-2px)',
           color: '#fff',
-          transform: 'translateY(-2px)'
+          '&:before': {
+            opacity: 1
+          }
         }
       }
     }
@@ -256,143 +418,214 @@ export default function ProfilePage({ params }: PageProps) {
       }}
     >
       <Container maxWidth='sm' sx={{ py: 4 }}>
-        <Paper
-          elevation={theme?.buttonStyle.type === 'glass' ? 0 : 3}
-          sx={{
-            ...defaultStyles.paper,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
-            color: theme?.textColor || 'inherit',
-            borderRadius: theme?.buttonStyle?.style.borderRadius || defaultStyles.paper.borderRadius,
-            backdropFilter:
-              theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
-            border: theme?.buttonStyle.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-            position: 'relative',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 2 }}>
-            <Tooltip title='Copy Link' placement='left'>
-              <IconButton onClick={handleCopyLink} size='small' sx={defaultStyles.shareButton}>
-                <ContentCopyIcon fontSize='small' />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title='Share Profile' placement='left'>
-              <IconButton onClick={handleShare} size='small' sx={defaultStyles.shareButton}>
-                <ShareIcon fontSize='small' />
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          <Avatar
-            src={userData?.photoURL}
+        <Fade in={pageLoaded} timeout={800}>
+          <Paper
+            elevation={theme?.buttonStyle.type === 'glass' ? 0 : 3}
             sx={{
-              ...defaultStyles.avatar,
-              borderColor: theme?.buttonStyle.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
-              boxShadow:
-                theme?.buttonStyle.type === 'neon'
-                  ? `0 0 20px ${theme.buttonStyle.style.color}`
-                  : defaultStyles.avatar.boxShadow,
-              bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor
+              ...defaultStyles.paper,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
+              color: theme?.textColor || 'inherit',
+              borderRadius: theme?.buttonStyle?.style.borderRadius || defaultStyles.paper.borderRadius,
+              backdropFilter:
+                theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
+              border: theme?.buttonStyle.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+              position: 'relative',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 15px 50px rgba(0, 0, 0, 0.12)'
+              }
             }}
           >
-            {userData?.displayName?.[0]}
-          </Avatar>
-
-          <Typography
-            variant='h5'
-            gutterBottom
-            fontWeight='bold'
-            sx={{
-              background: theme?.buttonStyle.type === 'gradient' ? theme.buttonStyle.style.background : 'none',
-              WebkitBackgroundClip: theme?.buttonStyle.type === 'gradient' ? 'text' : 'none',
-              WebkitTextFillColor: theme?.buttonStyle.type === 'gradient' ? 'transparent' : 'inherit',
-              color: theme?.textColor
-            }}
-          >
-            {userData?.displayName}
-          </Typography>
-
-          {userData?.bio && (
-            <Typography
-              align='center'
+            <Box
               sx={{
-                mb: 4,
-                opacity: 0.8,
-                color: theme?.textColor ? `${theme.textColor}CC` : 'text.secondary',
-                maxWidth: '600px',
-                mx: 'auto',
-                lineHeight: 1.6,
-                px: 2
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                display: 'flex',
+                gap: 1,
+                zIndex: 2
               }}
             >
-              {userData.bio}
-            </Typography>
-          )}
+              <Tooltip title='Copy Link' placement='left'>
+                <IconButton onClick={handleCopyLink} size='small' sx={defaultStyles.shareButton}>
+                  <ContentCopyIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
 
-          <Box sx={{ width: '100%', px: { xs: 0, sm: 2 } }}>
-            {links.map(link => {
-              const platformInfo = platformIcons[link.platform]
-              return (
-                <Button
-                  key={link.id}
-                  component='a'
-                  href={link.url}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  fullWidth
-                  variant={theme?.buttonStyle?.type === 'outline' ? 'outlined' : 'contained'}
-                  startIcon={platformInfo.icon}
-                  onClick={e => handleLinkClick(e, link)}
-                  sx={getButtonStyle(platformInfo)}
-                >
-                  {link.title || platformInfo.placeholder}
-                </Button>
-              )
-            })}
-          </Box>
+              <Tooltip title='Share Profile' placement='left'>
+                <IconButton onClick={handleShare} size='small' sx={defaultStyles.shareButton}>
+                  <ShareIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
 
-          <Box
-            sx={{
-              width: '100%',
-              mt: 4,
-              pt: 4,
-              borderTop: '1px solid',
-              borderColor: theme?.buttonStyle.type === 'glass' ? 'rgba(255, 255, 255, 0.1)' : 'divider',
-              textAlign: 'center'
-            }}
-          >
-            <Typography
-              variant='body2'
+              <Tooltip title='QR Code' placement='left'>
+                <IconButton onClick={() => setQrDialogOpen(true)} size='small' sx={defaultStyles.shareButton}>
+                  <QrCodeIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Avatar
+              src={userData?.photoURL}
               sx={{
-                color: theme?.textColor || 'text.secondary',
-                opacity: 0.5,
-                mb: 2
-              }}
-            >
-              Powered by TanLink
-            </Typography>
-
-            <Button
-              href='/r'
-              variant='text'
-              sx={{
-                color: '#2196F3',
-                fontWeight: 'bold',
-                textTransform: 'none',
-                fontSize: '0.95rem',
+                ...defaultStyles.avatar,
+                borderColor: theme?.buttonStyle.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
+                boxShadow:
+                  theme?.buttonStyle.type === 'neon'
+                    ? `0 0 20px ${theme.buttonStyle.style.color}`
+                    : defaultStyles.avatar.boxShadow,
+                bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
                 '&:hover': {
-                  bgcolor: 'rgba(33, 150, 243, 0.08)'
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)'
                 }
               }}
             >
-              Want to create your own TanLink profile?
-            </Button>
-          </Box>
-        </Paper>
+              {userData?.displayName?.[0]}
+            </Avatar>
+
+            <Typography
+              variant='h5'
+              gutterBottom
+              fontWeight='bold'
+              sx={{
+                background: theme?.buttonStyle.type === 'gradient' ? theme.buttonStyle.style.background : 'none',
+                WebkitBackgroundClip: theme?.buttonStyle.type === 'gradient' ? 'text' : 'none',
+                WebkitTextFillColor: theme?.buttonStyle.type === 'gradient' ? 'transparent' : 'inherit',
+                color: theme?.textColor
+              }}
+            >
+              {userData?.displayName}
+            </Typography>
+
+            {userData?.bio && (
+              <Typography
+                align='center'
+                sx={{
+                  mb: 4,
+                  opacity: 0.8,
+                  color: theme?.textColor ? `${theme.textColor}CC` : 'text.secondary',
+                  maxWidth: '600px',
+                  mx: 'auto',
+                  lineHeight: 1.6,
+                  px: 2
+                }}
+              >
+                {userData.bio}
+              </Typography>
+            )}
+
+            <Box sx={{ width: '100%', px: { xs: 0, sm: 2 } }}>
+              {links.map((link, index) => {
+                const platformInfo = platformIcons[link.platform]
+                return (
+                  <Fade key={link.id} in timeout={300 + index * 100}>
+                    <Button
+                      component='a'
+                      href={link.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      fullWidth
+                      variant={theme?.buttonStyle?.type === 'outline' ? 'outlined' : 'contained'}
+                      startIcon={platformInfo.icon}
+                      onClick={e => handleLinkClick(e, link)}
+                      sx={getButtonStyle(platformInfo)}
+                    >
+                      {link.title || platformInfo.placeholder}
+                    </Button>
+                  </Fade>
+                )
+              })}
+            </Box>
+
+            {/* Paylaşım seçenekleri */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 2,
+                mt: 3,
+                mb: 2
+              }}
+            >
+              <IconButton
+                onClick={handleWhatsAppShare}
+                sx={{
+                  bgcolor: '#25D366',
+                  color: '#fff',
+                  '&:hover': { bgcolor: '#128C7E' }
+                }}
+              >
+                <WhatsAppIcon />
+              </IconButton>
+
+              <IconButton
+                onClick={handleEmailShare}
+                sx={{
+                  bgcolor: '#D44638',
+                  color: '#fff',
+                  '&:hover': { bgcolor: '#B23121' }
+                }}
+              >
+                <EmailIcon />
+              </IconButton>
+            </Box>
+
+            {/* Minimalist Footer - Güncellendi */}
+            <Box
+              sx={{
+                mt: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <Typography
+                variant='caption'
+                sx={{
+                  color: theme?.textColor || 'text.secondary',
+                  opacity: 0.5,
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  fontWeight: 300,
+                  fontSize: '0.65rem'
+                }}
+              >
+                Powered by TanLink
+              </Typography>
+
+              <Link
+                href='/r'
+                underline='hover'
+                sx={{
+                  color: theme?.buttonStyle?.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
+                  fontSize: '0.75rem',
+                  opacity: 0.8,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    opacity: 1,
+                    transform: 'translateY(-1px)'
+                  }
+                }}
+              >
+                Create your own profile
+              </Link>
+            </Box>
+          </Paper>
+        </Fade>
       </Container>
+
+      {/* QR kod modalı ayrı bir bileşen olarak kullanılıyor */}
+      <QRCodeModal
+        open={qrDialogOpen}
+        onClose={() => setQrDialogOpen(false)}
+        url={window.location.href}
+        username={username}
+      />
 
       <Snackbar
         open={copySnackbar}

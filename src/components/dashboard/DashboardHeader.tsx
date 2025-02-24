@@ -17,7 +17,7 @@ import {
   useMediaQuery
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Brightness4, Brightness7, KeyboardArrowDown, Translate, Person, Settings, Logout } from '@mui/icons-material'
+import { Brightness4, Brightness7, KeyboardArrowDown, Translate, Person, Logout } from '@mui/icons-material'
 import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/config/firebase'
@@ -69,11 +69,6 @@ export default function DashboardHeader() {
     handleClose()
   }
 
-  const handleSettingsClick = () => {
-    router.push('/dashboard/settings')
-    handleClose()
-  }
-
   return (
     <AppBar
       position='fixed'
@@ -87,8 +82,8 @@ export default function DashboardHeader() {
             ? 'rgba(17, 25, 40, 0.9)'
             : 'rgba(17, 25, 40, 0.7)'
           : scrolled
-            ? 'rgba(255, 255, 255, 0.95)'
-            : 'rgba(255, 255, 255, 0.8)',
+          ? 'rgba(255, 255, 255, 0.95)'
+          : 'rgba(255, 255, 255, 0.8)',
         transition: 'all 0.3s ease',
         borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`
       }}
@@ -250,11 +245,6 @@ export default function DashboardHeader() {
               <MenuItem onClick={handleProfileClick} sx={{ py: 1.5 }}>
                 <Person sx={{ mr: 2, fontSize: 20 }} />
                 Profile
-              </MenuItem>
-
-              <MenuItem onClick={handleSettingsClick} sx={{ py: 1.5 }}>
-                <Settings sx={{ mr: 2, fontSize: 20 }} />
-                Settings
               </MenuItem>
 
               <Divider sx={{ my: 1 }} />

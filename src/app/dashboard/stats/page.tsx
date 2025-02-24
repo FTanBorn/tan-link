@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 'use client'
 import {
   Box,
@@ -11,7 +10,8 @@ import {
   LinearProgress,
   Divider,
   Skeleton,
-  Stack
+  Paper,
+  IconButton
 } from '@mui/material'
 import {
   Visibility,
@@ -19,259 +19,287 @@ import {
   Share as ShareIcon,
   Add as AddIcon,
   Link as LinkIcon,
-  People as PeopleIcon
+  People as PeopleIcon,
+  OpenInNew as OpenInNewIcon
 } from '@mui/icons-material'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { platformIcons } from '@/components/tour/steps/LinksStep/constants'
+import { useState, useEffect } from 'react'
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const router = useRouter()
   const { stats, linkStats, loading, linksData } = useAnalytics(user?.uid)
+  const [greetingText, setGreetingText] = useState('Hello')
 
+  useEffect(() => {
+    const hour = new Date().getHours()
+    if (hour >= 5 && hour < 12) {
+      setGreetingText('Good Morning')
+    } else if (hour >= 12 && hour < 18) {
+      setGreetingText('Good Afternoon')
+    } else {
+      setGreetingText('Good Evening')
+    }
+  }, [])
+
+  // Analytics cards config
   const statsConfig = [
     {
-      title: 'Total Views',
+      title: 'Views',
       value: stats.totalViews.toLocaleString(),
       icon: <Visibility />,
-      trend: '+0%',
-      isUp: true,
       color: '#2196F3'
     },
     {
-      title: 'Total Clicks',
+      title: 'Clicks',
       value: stats.totalClicks.toLocaleString(),
       icon: <TrendingUp />,
-      trend: '+0%',
-      isUp: true,
       color: '#4CAF50'
     },
     {
-      title: 'Active Links',
+      title: 'Links',
       value: stats.activeLinks.toString(),
       icon: <LinkIcon />,
-      trend: '0%',
-      isUp: true,
       color: '#FF9800'
     },
     {
       title: 'CTR',
       value: stats.totalViews > 0 ? `${((stats.totalClicks / stats.totalViews) * 100).toFixed(1)}%` : '0%',
       icon: <PeopleIcon />,
-      trend: '0%',
-      isUp: true,
       color: '#9C27B0'
     }
   ]
 
   return (
     <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 4 } }}>
-      {/* Header */}
-      <Box
+      {/* Welcome Section */}
+      <Card
+        elevation={0}
         sx={{
           mb: 4,
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 2
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider'
         }}
       >
-        {/* Welcome Message */}
-        <Typography variant='h5' sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
-          Welcome, {user?.displayName || 'User'}! 👋
-        </Typography>
+        <CardContent sx={{ p: 3 }}>
+          <Grid container spacing={2} alignItems='center'>
+            <Grid item xs={12} sm={8}>
+              <Typography variant='h5' gutterBottom>
+                {greetingText}, {user?.displayName || 'User'}
+              </Typography>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
+                Manage your TanLink profile and monitor its performance.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={4} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+                <Button
+                  variant='contained'
+                  startIcon={<AddIcon />}
+                  onClick={() => router.push('/dashboard/links')}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none'
+                  }}
+                >
+                  Add Link
+                </Button>
+                <Button
+                  variant='outlined'
+                  startIcon={<ShareIcon />}
+                  onClick={() => {
+                    if (userData?.username) {
+                      router.push(`/${userData.username}`)
+                    } else if (user?.displayName) {
+                      router.push(`/${user.displayName}`)
+                    } else {
+                      // Alert the user if no username is found
+                      alert('You need to create a username first to view your profile page.')
+                      router.push('/dashboard/profile')
+                    }
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none'
+                  }}
+                >
+                  Profile
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-        {/* Action Buttons */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 1.5
-          }}
-        >
-          <Button
-            variant='contained'
-            startIcon={<AddIcon />}
-            onClick={() => router.push('/dashboard/links')}
-            sx={{
-              px: 3, // Daha minimal bir genişlik
-              borderRadius: 3,
-              textTransform: 'none'
-            }}
-          >
-            Add Link
-          </Button>
-          <Button
-            variant='outlined'
-            startIcon={<ShareIcon />}
-            disabled
-            onClick={() => router.push(`/${user?.displayName}`)}
-            sx={{
-              px: 3, // Daha minimal bir genişlik
-              borderRadius: 3,
-              textTransform: 'none'
-            }}
-          >
-            Profile
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Stats Grid */}
-      <Grid container spacing={3} sx={{ mb: 2 }}>
+      {/* Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         {statsConfig.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card
-              elevation={4}
+          <Grid item xs={6} md={3} key={index}>
+            <Paper
+              elevation={0}
               sx={{
+                p: 2,
+                height: '100%',
                 borderRadius: 2,
-                overflow: 'hidden',
-                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                border: '1px solid',
+                borderColor: 'divider',
+                transition: 'transform 0.2s ease',
                 '&:hover': {
                   transform: 'translateY(-4px)',
-                  boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.15)'
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
                 }
               }}
             >
-              {/* Üst Kısım */}
-              <Stack
-                direction='column'
-                justifyContent='center'
-                alignItems='center'
-                p={2}
-                sx={{
-                  bgcolor: `${stat.color}10`,
-                  borderBottom: `2px solid ${stat.color}`,
-                  textAlign: 'center'
-                }}
-              >
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <Avatar
                   sx={{
-                    bgcolor: `${stat.color}25`,
+                    width: 36,
+                    height: 36,
+                    bgcolor: `${stat.color}12`,
                     color: stat.color,
-                    width: 56,
-                    height: 56,
-                    fontSize: 24,
-                    mb: 1
+                    mr: 1.5
                   }}
                 >
                   {stat.icon}
                 </Avatar>
-                {!loading ? (
-                  <>
-                    <Typography variant='h5' fontWeight='bold' color={stat.color}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant='subtitle1' color='text.secondary'>
-                      {stat.title}
-                    </Typography>
-                  </>
-                ) : (
-                  <Skeleton variant='text' width='60%' height={40} />
-                )}
-              </Stack>
-              {/* Boş Alt Kısım */}
-              <Box p={2}></Box>
-            </Card>
+                <Typography variant='body2' color='text.secondary'>
+                  {stat.title}
+                </Typography>
+              </Box>
+
+              {!loading ? (
+                <Typography variant='h5' fontWeight='medium'>
+                  {stat.value}
+                </Typography>
+              ) : (
+                <Skeleton variant='text' width='60%' height={36} />
+              )}
+            </Paper>
           </Grid>
         ))}
       </Grid>
 
       {/* Links Performance */}
-      <Card
-        elevation={4}
+      <Paper
+        elevation={0}
         sx={{
           borderRadius: 2,
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.15)'
-          }
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden'
         }}
       >
-        <CardContent>
-          {/* Başlık */}
-          <Typography variant='h6' fontWeight='bold' gutterBottom>
-            Links Performance
-          </Typography>
-          <Divider sx={{ my: 2 }} />
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant='h6'>Link Performance</Typography>
+          {!loading && linksData.length > 0 && (
+            <Button size='small' onClick={() => router.push('/dashboard/links')} sx={{ textTransform: 'none' }}>
+              View All
+            </Button>
+          )}
+        </Box>
 
-          {/* İçerik */}
-          {loading
-            ? [...Array(5)].map((_, index) => (
-                <Box key={index} sx={{ mb: 2 }}>
-                  <Skeleton variant='text' width='80%' height={30} />
-                  <Skeleton variant='rectangular' width='100%' height={6} sx={{ mt: 1, borderRadius: 5 }} />
+        <Divider />
+
+        <Box sx={{ p: 1.5 }}>
+          {loading ? (
+            [...Array(3)].map((_, index) => (
+              <Box key={index} sx={{ mb: 1.5, opacity: 1 - index * 0.2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Skeleton variant='text' width='40%' height={20} />
+                  <Skeleton variant='text' width='15%' height={20} />
                 </Box>
-              ))
-            : linksData.map((link, index) => {
-                const linkStat = linkStats.find((stat: any) => stat.platform === link.platform)
+                <Skeleton variant='rounded' width='100%' height={6} sx={{ borderRadius: 1 }} />
+              </Box>
+            ))
+          ) : linksData.length > 0 ? (
+            linksData.map((link, index) => {
+              const linkStat = linkStats.find(stat => stat.platform === link.platform) || { clicks: 0, progress: 0 }
 
-                return (
+              return (
+                <Box
+                  key={index}
+                  sx={{
+                    mb: index !== linksData.slice(0, 5).length - 1 ? 1.5 : 0,
+                    p: 1,
+                    borderRadius: 1,
+                    '&:hover': {
+                      bgcolor: 'action.hover'
+                    }
+                  }}
+                >
                   <Box
-                    key={index}
                     sx={{
-                      mb: 1,
-                      p: 1,
-
-                      borderRadius: 2,
-                      '&:hover': {
-                        bgcolor: 'rgba(0, 0, 0, 0.06)'
-                      }
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: 0.75
                     }}
                   >
-                    {/* Başlık ve İstatistik */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          bgcolor: platformIcons[link.platform]?.bgColor || '#f0f0f0',
+                          color: platformIcons[link.platform]?.color || '#333'
+                        }}
+                      >
                         {platformIcons[link.platform]?.icon}
-                        <Typography variant='body2' fontWeight='500'>
-                          {link.title}
-                        </Typography>
-                      </Box>
-                      <Typography variant='body2' color='text.secondary' fontWeight='500'>
-                        {linkStat ? `${linkStat.clicks.toLocaleString()} clicks` : '0 clicks'}
+                      </Avatar>
+                      <Typography variant='body2' noWrap sx={{ maxWidth: { xs: 120, sm: 150, md: 200 } }}>
+                        {link.title || platformIcons[link.platform]?.placeholder}
                       </Typography>
                     </Box>
 
-                    {/* İlerleme Çubuğu */}
-                    <LinearProgress
-                      variant='determinate'
-                      value={linkStat?.progress || 0}
-                      sx={{
-                        height: 8,
-                        borderRadius: 5,
-                        bgcolor: 'rgba(0,0,0,0.1)',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        '& .MuiLinearProgress-bar': {
-                          bgcolor: platformIcons[link.platform]?.color,
-                          animation: `progressAnimation 1.5s ease-in-out`,
-                          animationFillMode: 'forwards'
-                        },
-                        '@keyframes progressAnimation': {
-                          '0%': { width: '0%' },
-                          '100%': { width: `${linkStat?.progress || 0}%` }
-                        }
-                      }}
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant='caption' color='text.secondary'>
+                        {linkStat.clicks.toLocaleString()} clicks
+                      </Typography>
+
+                      <IconButton size='small' href={link.url} target='_blank' sx={{ padding: 0.5 }}>
+                        <OpenInNewIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Box>
                   </Box>
-                )
-              })}
-        </CardContent>
-      </Card>
+
+                  <LinearProgress
+                    variant='determinate'
+                    value={linkStat.progress || 0}
+                    sx={{
+                      height: 4,
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                      '.MuiLinearProgress-bar': {
+                        bgcolor: platformIcons[link.platform]?.color
+                      }
+                    }}
+                  />
+                </Box>
+              )
+            })
+          ) : (
+            <Box sx={{ py: 3, textAlign: 'center' }}>
+              <Typography color='text.secondary' variant='caption' sx={{ display: 'block', mb: 1 }}>
+                You haven`t added any links yet.
+              </Typography>
+              <Button
+                variant='contained'
+                size='small'
+                startIcon={<AddIcon />}
+                onClick={() => router.push('/dashboard/links')}
+                sx={{ mt: 1, borderRadius: 1.5, textTransform: 'none', py: 0.5 }}
+              >
+                Add Link
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </Paper>
     </Box>
   )
 }

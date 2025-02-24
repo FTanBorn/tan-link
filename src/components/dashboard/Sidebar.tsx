@@ -17,7 +17,6 @@ import {
 import {
   Link as LinkIcon,
   Palette as PaletteIcon,
-  Settings as SettingsIcon,
   Close as CloseIcon,
   VerifiedUser as UserIcon,
   Analytics as AnalyticsIcon
@@ -62,12 +61,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
       icon: <PaletteIcon />,
       path: '/dashboard/appearance',
       description: 'Customize your profile look'
-    },
-    {
-      title: 'Settings',
-      icon: <SettingsIcon />,
-      path: '/dashboard/settings',
-      description: 'Manage your account settings'
     }
   ]
 

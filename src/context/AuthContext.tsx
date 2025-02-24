@@ -2,7 +2,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { onAuthStateChanged, User } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
 
 interface UserData {
@@ -111,6 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoURL,
         photoPublicId
       }
+
+      // Firestore güncelleme
+      await updateDoc(doc(db, 'users', user.uid), {
+        photoURL,
+        photoPublicId
+      })
 
       setUserData(updatedUserData)
       saveUserDataToStorage(updatedUserData)

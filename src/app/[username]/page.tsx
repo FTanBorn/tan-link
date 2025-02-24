@@ -51,7 +51,7 @@ interface Link {
 }
 
 interface PageProps {
-  params: { username: string }
+  params: { username: string } // Promise olmadan doğrudan obje olarak tanımlandı
 }
 
 const downloadQRCode = (qrCodeRef: React.RefObject<HTMLDivElement>, username: string) => {
@@ -171,7 +171,7 @@ const defaultStyles = {
 }
 
 export default function ProfilePage({ params }: PageProps) {
-  const { username } = params
+  const { username } = params // use(params) yerine doğrudan params kullanıldı
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [userData, setUserData] = useState<UserData | null>(null)

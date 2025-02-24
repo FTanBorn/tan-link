@@ -13,7 +13,8 @@ import {
   Grid,
   Paper,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  CircularProgress
 } from '@mui/material'
 import { ContentCopy, Dashboard, Launch as LaunchIcon, Celebration as CelebrationIcon } from '@mui/icons-material'
 import { useAuth } from '@/context/AuthContext'
@@ -26,18 +27,31 @@ export default function PreviewStep() {
   const theme = useTheme()
   const router = useRouter()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const { user } = useAuth()
+  const { user, userData, refreshUserData } = useAuth()
   const { prevStep, markStepCompleted } = useTour()
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [username, setUsername] = useState<string | null>(null)
+  const [navigating, setNavigating] = useState(false)
 
   useEffect(() => {
     const fetchUsername = async () => {
       if (!user) return
+
+      // Önce userData'ya bakıyoruz - AuthContext'ten gelen veri
+      if (userData?.username) {
+        setUsername(userData.username)
+        return
+      }
+
+      // Eğer userData'da username yoksa Firestore'dan çekiyoruz
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid))
         if (userDoc.exists()) {
-          setUsername(userDoc.data().username)
+          const fetchedUsername = userDoc.data().username
+          setUsername(fetchedUsername)
+
+          // Tarayıcı storage'a kaydedelim (opsiyonel)
+          sessionStorage.setItem('username', fetchedUsername)
         }
       } catch (error) {
         console.error('Error fetching username:', error)
@@ -45,7 +59,13 @@ export default function PreviewStep() {
     }
 
     fetchUsername()
-  }, [user])
+
+    // Tarayıcı storage'dan daha önce kaydedilmiş bir username var mı diye bakalım
+    const storedUsername = sessionStorage.getItem('username')
+    if (storedUsername && !username) {
+      setUsername(storedUsername)
+    }
+  }, [user, userData])
 
   const profileUrl = username ? `${username}` : ''
 
@@ -61,7 +81,29 @@ export default function PreviewStep() {
 
   const handleFinish = () => {
     markStepCompleted('preview')
+    // Kullanıcı adını session storage'a kaydet
+    if (username) {
+      sessionStorage.setItem('username', username)
+    }
+    setNavigating(true)
     router.push(`/${profileUrl}`)
+  }
+
+  const goToDashboard = async () => {
+    setNavigating(true)
+
+    try {
+      // AuthContext'teki refreshUserData fonksiyonunu çağır
+      await refreshUserData()
+
+      // Verilerin tamamen yüklenmesi için kısa bir gecikme
+      setTimeout(() => {
+        router.push('/dashboard/stats')
+      }, 300)
+    } catch (error) {
+      console.error('Error refreshing data before navigation:', error)
+      router.push('/dashboard/stats')
+    }
   }
 
   return (
@@ -143,7 +185,13 @@ export default function PreviewStep() {
         <Box sx={{ mt: 4 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
-              <Button fullWidth variant='outlined' onClick={prevStep} size={isMobile ? 'large' : 'medium'}>
+              <Button
+                fullWidth
+                variant='outlined'
+                onClick={prevStep}
+                size={isMobile ? 'large' : 'medium'}
+                disabled={navigating}
+              >
                 Back
               </Button>
             </Grid>
@@ -152,10 +200,11 @@ export default function PreviewStep() {
                 fullWidth
                 variant='contained'
                 onClick={handleFinish}
-                startIcon={<LaunchIcon />}
+                startIcon={navigating ? <CircularProgress size={20} color='inherit' /> : <LaunchIcon />}
                 size={isMobile ? 'large' : 'medium'}
+                disabled={navigating}
               >
-                View Profile
+                {navigating ? 'Loading...' : 'View Profile'}
               </Button>
             </Grid>
             <Grid item xs={12} md={4}>
@@ -163,11 +212,12 @@ export default function PreviewStep() {
                 fullWidth
                 variant='contained'
                 color='success'
-                onClick={() => router.push('/dashboard/stats')}
-                startIcon={<Dashboard />}
+                onClick={goToDashboard}
+                startIcon={navigating ? <CircularProgress size={20} color='inherit' /> : <Dashboard />}
                 size={isMobile ? 'large' : 'medium'}
+                disabled={navigating}
               >
-                Go to Dashboard
+                {navigating ? 'Loading...' : 'Go to Dashboard'}
               </Button>
             </Grid>
           </Grid>

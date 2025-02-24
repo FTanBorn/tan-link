@@ -20,8 +20,9 @@ import { useAuth } from '@/context/AuthContext'
 import { useTour } from '@/context/TourContext'
 import { platformIcons } from './constants'
 import SortableLink from './SortableLink'
-import LinkPreview from './LinkPreview'
+
 import AddLinkDialog from './AddLinkDialog'
+import LinkPreview from './LinkPreview'
 
 interface Link {
   id: string
@@ -45,6 +46,7 @@ interface FirestoreLink extends Link {
 export default function LinksStep() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'))
   const { user } = useAuth()
   const { nextStep, prevStep, markStepCompleted } = useTour()
   const [links, setLinks] = useState<Link[]>([])
@@ -265,6 +267,7 @@ export default function LinksStep() {
       )}
 
       <Grid container spacing={4}>
+        {/* Links Section */}
         <Grid item xs={12} md={7}>
           <Box sx={{ mb: 2 }}>
             <Typography variant='h5' fontWeight='bold'>
@@ -309,14 +312,17 @@ export default function LinksStep() {
           )}
         </Grid>
 
-        <Grid item xs={12} md={5}>
-          <Box sx={{ position: 'sticky', top: 20 }}>
-            <Typography variant='h6' gutterBottom>
-              Preview
-            </Typography>
-            <LinkPreview links={links} />
-          </Box>
-        </Grid>
+        {/* Preview Section - Desktop */}
+        {!isTablet && (
+          <Grid item md={5}>
+            <Box sx={{ position: 'sticky', top: 20 }}>
+              <Typography variant='h6' gutterBottom>
+                Preview
+              </Typography>
+              <LinkPreview links={links} />
+            </Box>
+          </Grid>
+        )}
       </Grid>
 
       <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>

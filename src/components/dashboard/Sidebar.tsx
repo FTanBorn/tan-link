@@ -25,6 +25,7 @@ import {
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import ShareButton from './ShareButton'
+import { useEffect } from 'react'
 
 interface SidebarProps {
   onClose?: () => void
@@ -33,7 +34,7 @@ interface SidebarProps {
 export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { userData } = useAuth()
+  const { userData, refreshUserData } = useAuth()
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
 
@@ -74,6 +75,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
     router.push(path)
     if (onClose) onClose()
   }
+
+  useEffect(() => {
+    refreshUserData()
+  }, [])
 
   return (
     <Box

@@ -106,6 +106,8 @@ export default function ProfilePage({ params }: PageProps) {
         setUserId(uid)
 
         const userDoc = await getDoc(doc(db, 'users', uid))
+        console.log(userDoc)
+
         if (!userDoc.exists()) {
           setError('User not found')
           setLoading(false)
@@ -126,7 +128,7 @@ export default function ProfilePage({ params }: PageProps) {
                 id: doc.id,
                 ...doc.data(),
                 order: doc.data().order || 0
-              }) as Link
+              } as Link)
           )
           .sort((a, b) => a.order - b.order)
 

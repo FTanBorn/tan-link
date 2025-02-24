@@ -6,19 +6,20 @@ import { PhotoCamera, Delete as DeleteIcon } from '@mui/icons-material'
 import { useTour } from '@/context/TourContext'
 import { useAuth } from '@/context/AuthContext'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { storage, db } from '@/config/firebase'
+import { db } from '@/config/firebase'
 
 const MAX_BIO_LENGTH = 150
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 export default function ProfileStep() {
-  const { user } = useAuth()
+  const { user, updateUserPhoto } = useAuth() // updateUserPhoto fonksiyonunu çekiyoruz
   const { nextStep, prevStep, markStepCompleted } = useTour()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     displayName: '',
     photoURL: '',
+    photoPublicId: '',
     bio: ''
   })
   const [uploading, setUploading] = useState(false)
@@ -35,7 +36,7 @@ export default function ProfileStep() {
         photoURL: user.photoURL || ''
       }))
 
-      // Mevcut bio'yu çek
+      // Mevcut verileri çek
       const fetchUserData = async () => {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid))
@@ -43,7 +44,9 @@ export default function ProfileStep() {
             const userData = userDoc.data()
             setFormData(prev => ({
               ...prev,
-              bio: userData.bio || ''
+              bio: userData.bio || '',
+              photoURL: userData.photoURL || '',
+              photoPublicId: userData.photoPublicId || ''
             }))
           }
         } catch (err) {
@@ -59,7 +62,7 @@ export default function ProfileStep() {
     const file = event.target.files?.[0]
     if (!file || !user) return
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       setError('File size should be less than 5MB')
       return
     }
@@ -68,11 +71,46 @@ export default function ProfileStep() {
     setError('')
 
     try {
-      const storageRef = ref(storage, `profile_photos/${user.uid}`)
-      await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(storageRef)
+      // Eski fotoğraf varsa sil
+      if (formData.photoPublicId) {
+        try {
+          await fetch('/api/cloudinary?action=delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ publicId: formData.photoPublicId })
+          })
+        } catch (err) {
+          console.error('Error deleting old photo:', err)
+        }
+      }
 
-      setFormData(prev => ({ ...prev, photoURL: downloadURL }))
+      // Yeni fotoğrafı Cloudinary'ye yükle
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', file)
+
+      const response = await fetch('/api/cloudinary?action=upload', {
+        method: 'POST',
+        body: uploadFormData
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to upload image')
+      }
+
+      const data = await response.json()
+
+      // AuthContext'i güncelle
+      await updateUserPhoto(data.secure_url, data.public_id)
+
+      // Yerel state'i güncelle
+      setFormData(prev => ({
+        ...prev,
+        photoURL: data.secure_url,
+        photoPublicId: data.public_id
+      }))
     } catch (err) {
       console.error('Error uploading file:', err)
       setError('Failed to upload image')
@@ -82,15 +120,29 @@ export default function ProfileStep() {
   }
 
   const handleDeletePhoto = async () => {
-    if (!user || !formData.photoURL) return
+    if (!user || !formData.photoURL || !formData.photoPublicId) return
 
+    setUploading(true)
     try {
-      const storageRef = ref(storage, `profile_photos/${user.uid}`)
-      await deleteObject(storageRef)
-      setFormData(prev => ({ ...prev, photoURL: '' }))
+      // Cloudinary'den sil
+      await fetch('/api/cloudinary?action=delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ publicId: formData.photoPublicId })
+      })
+
+      // AuthContext'i güncelle
+      await updateUserPhoto(null, null)
+
+      // Yerel state'i güncelle
+      setFormData(prev => ({ ...prev, photoURL: '', photoPublicId: '' }))
     } catch (err) {
       console.error('Error deleting photo:', err)
       setError('Failed to delete photo')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -110,6 +162,7 @@ export default function ProfileStep() {
       await updateDoc(doc(db, 'users', user.uid), {
         displayName: formData.displayName.trim(),
         photoURL: formData.photoURL,
+        photoPublicId: formData.photoPublicId,
         bio: formData.bio.trim()
       })
 

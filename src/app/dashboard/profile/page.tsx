@@ -18,8 +18,7 @@ import {
 import { PhotoCamera, Delete as DeleteIcon, Save as SaveIcon } from '@mui/icons-material'
 import { useAuth } from '@/context/AuthContext'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { db, storage } from '@/config/firebase'
+import { db } from '@/config/firebase'
 
 const MAX_BIO_LENGTH = 150
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -30,10 +29,11 @@ interface UserProfile {
   username: string
   bio: string
   photoURL: string | null
+  photoPublicId: string | null
 }
 
 export default function ProfileSettingsPage() {
-  const { user } = useAuth()
+  const { user, updateUserPhoto } = useAuth()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -42,7 +42,8 @@ export default function ProfileSettingsPage() {
     displayName: '',
     username: '',
     bio: '',
-    photoURL: null
+    photoURL: null,
+    photoPublicId: null
   })
 
   useEffect(() => {
@@ -60,7 +61,8 @@ export default function ProfileSettingsPage() {
           displayName: userData.displayName || '',
           username: userData.username || '',
           bio: userData.bio || '',
-          photoURL: userData.photoURL || null
+          photoURL: userData.photoURL || null,
+          photoPublicId: userData.photoPublicId || null
         })
       }
     } catch (err) {
@@ -88,15 +90,47 @@ export default function ProfileSettingsPage() {
     setError('')
 
     try {
-      const storageRef = ref(storage, `profile_photos/${user.uid}`)
-      await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(storageRef)
+      // Eski fotoğraf varsa sil
+      if (profile.photoPublicId) {
+        try {
+          await fetch('/api/cloudinary?action=delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ publicId: profile.photoPublicId })
+          })
+        } catch (err) {
+          console.error('Error deleting old photo:', err)
+        }
+      }
 
-      await updateDoc(doc(db, 'users', user.uid), {
-        photoURL: downloadURL
+      // Yeni fotoğrafı yükle
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/cloudinary?action=upload', {
+        method: 'POST',
+        body: formData
       })
 
-      setProfile(prev => ({ ...prev, photoURL: downloadURL }))
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to upload image')
+      }
+
+      const data = await response.json()
+
+      // AuthContext üzerinden güncelle (bu Firestore'u ve context'i güncelleyecek)
+      await updateUserPhoto(data.secure_url, data.public_id)
+
+      // Yerel state'i güncelle
+      setProfile(prev => ({
+        ...prev,
+        photoURL: data.secure_url,
+        photoPublicId: data.public_id
+      }))
+
       setSuccess('Profile photo updated successfully')
     } catch (err) {
       console.error('Error uploading file:', err)
@@ -107,21 +141,35 @@ export default function ProfileSettingsPage() {
   }
 
   const handleDeletePhoto = async () => {
-    if (!user || !profile.photoURL) return
+    if (!user || !profile.photoURL || !profile.photoPublicId) return
 
+    setUploading(true)
     try {
-      const storageRef = ref(storage, `profile_photos/${user.uid}`)
-      await deleteObject(storageRef)
-
-      await updateDoc(doc(db, 'users', user.uid), {
-        photoURL: null
+      // Cloudinary'den sil
+      const response = await fetch('/api/cloudinary?action=delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ publicId: profile.photoPublicId })
       })
 
-      setProfile(prev => ({ ...prev, photoURL: null }))
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete image')
+      }
+
+      // AuthContext üzerinden güncelle (bu Firestore'u ve context'i güncelleyecek)
+      await updateUserPhoto(null, null)
+
+      // Yerel state'i güncelle
+      setProfile(prev => ({ ...prev, photoURL: null, photoPublicId: null }))
       setSuccess('Profile photo removed successfully')
     } catch (err) {
       console.error('Error deleting photo:', err)
       setError('Failed to delete photo')
+    } finally {
+      setUploading(false)
     }
   }
 

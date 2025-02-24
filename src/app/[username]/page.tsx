@@ -50,12 +50,6 @@ interface Link {
   order: number
 }
 
-interface PageProps {
-  params: {
-    username: string
-  }
-}
-
 const downloadQRCode = (qrCodeRef: React.RefObject<HTMLDivElement>, username: string) => {
   if (!qrCodeRef.current) return
 
@@ -172,7 +166,7 @@ const defaultStyles = {
   }
 }
 
-export default function ProfilePage({ params }: PageProps) {
+export default function ProfilePage({ params }: { params: { username: string } }) {
   const { username } = params
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

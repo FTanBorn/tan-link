@@ -191,7 +191,7 @@ function ProfilePreviewShowcase() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setThemeIndex(prevIndex => (prevIndex + 1) % THEMES.length)
-    }, 2000)
+    }, 2200)
 
     return () => clearTimeout(timer)
   }, [themeIndex])

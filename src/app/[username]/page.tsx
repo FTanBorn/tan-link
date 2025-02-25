@@ -1,9 +1,10 @@
-import type { Metadata, ResolvingMetadata } from 'next'
+// src/app/[username]/page.tsx
+import type { Metadata } from 'next'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import ClientProfilePage from './client-page'
 
-// Params tipini doğru şekilde tanımlayalım
+// Params tipini tanımlama
 type Params = {
   params: {
     username: string
@@ -11,12 +12,12 @@ type Params = {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
-// Metadata fonksiyonu ekleyelim
-export async function generateMetadata({ params }: Params, parent: ResolvingMetadata): Promise<Metadata> {
+// Metadata fonksiyonu
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { username } = params
 
   try {
-    // Metadata için bazı temel bilgileri çekmeyi deneyebiliriz
+    // Metadata için temel bilgileri çekme
     const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()))
     let displayName = username
     let description = `Connect with ${username} through their TanLink profile`
@@ -58,7 +59,8 @@ export async function generateMetadata({ params }: Params, parent: ResolvingMeta
       }
     }
   } catch (error) {
-    // Hata durumunda basit bir metadata döndür
+    console.log(error)
+    // Hata durumunda basit metadata döndürme
     return {
       title: `${username} | TanLink`,
       description: `Connect with ${username} through their TanLink profile`

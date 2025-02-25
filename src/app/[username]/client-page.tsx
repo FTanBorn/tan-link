@@ -355,10 +355,6 @@ export default function ClientProfilePage({ params }: ClientParams) {
     }
   }
 
-  const pageUrl = typeof window !== 'undefined' ? window.location.href : ''
-  const defaultDescription = `Connect with ${userData?.displayName || 'this user'} through their TanLink profile`
-  const metaImage = userData?.photoURL || '/default-avatar.png'
-
   if (loading) {
     return (
       <Box

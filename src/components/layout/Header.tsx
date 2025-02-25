@@ -17,6 +17,7 @@ import {
   Divider,
   Stack
 } from '@mui/material'
+import Image from 'next/image'
 import {
   Brightness4,
   Brightness7,
@@ -26,19 +27,25 @@ import {
   ExitToApp as LogoutIcon,
   AddLink as AddLinkIcon
 } from '@mui/icons-material'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import Image from 'next/image'
 import { auth } from '@/config/firebase'
 import { signOut } from 'firebase/auth'
 import { useThemeContext } from '@/context/ThemeContext'
 
 export default function Header() {
+  const pathname = usePathname()
   const theme = useTheme()
   const router = useRouter()
   const { user } = useAuth()
   const { toggleTheme } = useThemeContext()
   const [anchorEl, setAnchorEl] = useState(null)
+
+  // Check if header should be hidden
+  const hideHeader = /^\/[^\/]+\/?$|^\/dashboard(\/.*)?\/?$/.test(pathname)
+
+  // If header should be hidden, return null
+  if (hideHeader) return null
 
   const isDarkMode = theme.palette.mode === 'dark'
 

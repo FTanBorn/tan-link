@@ -46,6 +46,132 @@ const THEMES = [
     buttonBgColor: '#dbeafe',
     buttonTextColor: '#2563eb',
     borderColor: '#bfdbfe'
+  },
+  {
+    id: 'modern-light',
+    bgColor: '#f0f2f5',
+    cardBgColor: '#ffffff',
+    textColor: '#000000',
+    buttonBgColor: 'linear-gradient(45deg, #2196F3, #21CBF3)',
+    buttonTextColor: '#ffffff',
+    borderColor: '#F5F7FF'
+  },
+  {
+    id: 'dark-glass',
+    bgColor: '#1a1a1a',
+    cardBgColor: 'rgba(45,45,45,0.8)',
+    textColor: '#ffffff',
+    buttonBgColor: 'rgba(255, 255, 255, 0.1)',
+    buttonTextColor: '#ffffff',
+    borderColor: 'rgba(255, 255, 255, 0.1)'
+  },
+  {
+    id: 'neon-nights',
+    bgColor: '#0a0a0a',
+    cardBgColor: 'rgba(20,20,20,0.9)',
+    textColor: '#ffffff',
+    buttonBgColor: 'transparent',
+    buttonTextColor: '#00ff88',
+    borderColor: '#00ff88'
+  },
+  {
+    id: 'pastel-dream',
+    bgColor: '#fef6ff',
+    cardBgColor: '#ffffff',
+    textColor: '#4a4a4a',
+    buttonBgColor: '#ffecf8',
+    buttonTextColor: '#d44d9c',
+    borderColor: '#f7e5ff'
+  },
+  {
+    id: 'ocean-breeze',
+    bgColor: '#e3f2fd',
+    cardBgColor: '#ffffff',
+    textColor: '#1e3a5c',
+    buttonBgColor: 'linear-gradient(45deg, #4FC3F7, #29B6F6)',
+    buttonTextColor: '#ffffff',
+    borderColor: '#BBDEFB'
+  },
+  {
+    id: 'minimal-mono',
+    bgColor: '#ffffff',
+    cardBgColor: '#fafafa',
+    textColor: '#000000',
+    buttonBgColor: 'transparent',
+    buttonTextColor: '#000000',
+    borderColor: '#000000'
+  },
+  {
+    id: 'sunset-bliss',
+    bgColor: '#ffecd2',
+    cardBgColor: '#ffffff',
+    textColor: '#5d4037',
+    buttonBgColor: 'linear-gradient(45deg, #FF7E5F, #FEB47B)',
+    buttonTextColor: '#ffffff',
+    borderColor: '#fcb69f'
+  },
+  {
+    id: 'forest-haven',
+    bgColor: '#e8f5e9',
+    cardBgColor: '#ffffff',
+    textColor: '#2e7d32',
+    buttonBgColor: '#81c784',
+    buttonTextColor: '#ffffff',
+    borderColor: '#a5d6a7'
+  },
+  {
+    id: 'crimson-flare',
+    bgColor: '#ffebee',
+    cardBgColor: '#ffffff',
+    textColor: '#c62828',
+    buttonBgColor: 'transparent',
+    buttonTextColor: '#e57373',
+    borderColor: '#e57373'
+  },
+  {
+    id: 'midnight-blues',
+    bgColor: '#263238',
+    cardBgColor: '#37474f',
+    textColor: '#ffffff',
+    buttonBgColor: '#455a64',
+    buttonTextColor: '#ffffff',
+    borderColor: '#37474f'
+  },
+  {
+    id: 'amber-wave',
+    bgColor: '#fff8e1',
+    cardBgColor: '#ffffff',
+    textColor: '#6d4c41',
+    buttonBgColor: '#ffe082',
+    buttonTextColor: '#6d4c41',
+    borderColor: '#ffe0b2'
+  },
+  {
+    id: 'icy-calm',
+    bgColor: '#e3f2fd',
+    cardBgColor: '#ffffff',
+    textColor: '#1e88e5',
+    buttonBgColor: 'linear-gradient(45deg, #64b5f6, #42a5f5)',
+    buttonTextColor: '#ffffff',
+    borderColor: '#e3f2fd'
+  },
+  {
+    id: 'cosmic-dream',
+    bgColor: '#2d2d44',
+    cardBgColor: '#3e3e5a',
+    textColor: '#ffffff',
+    buttonBgColor: 'transparent',
+    buttonTextColor: '#7c4dff',
+    borderColor: '#7c4dff'
+  },
+  {
+    id: 'golden-hour',
+    bgColor: '#fffde7',
+    cardBgColor: '#ffffff',
+    textColor: '#f57f17',
+    buttonBgColor: 'linear-gradient(45deg, #ffb74d, #ffa726)',
+    buttonTextColor: '#ffffff',
+    borderColor: '#ffecb3'
   }
 ]
 
@@ -98,11 +224,10 @@ FloatingBox.displayName = 'FloatingBox'
 function ProfilePreviewShowcase() {
   const [themeIndex, setThemeIndex] = useState(0)
 
-  // Optimize edilmiş tema değişimi - 7 saniyede bir değişecek şekilde
   useEffect(() => {
     const timer = setTimeout(() => {
       setThemeIndex(prevIndex => (prevIndex + 1) % THEMES.length)
-    }, 7000)
+    }, 2000)
 
     return () => clearTimeout(timer)
   }, [themeIndex])

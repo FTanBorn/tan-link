@@ -198,7 +198,6 @@ export default function Home() {
               </MotionBox>
             </Grid>
 
-            {/* Hero Illustration/Preview */}
             <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center' }}>
               <MotionBox
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -213,7 +212,6 @@ export default function Home() {
                   alignItems: 'center'
                 }}
               >
-                {/* Now we don't need separate floating boxes, they're part of the component */}
                 <Box
                   sx={{
                     position: 'relative',
@@ -232,91 +230,6 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* Features Section */}
-      <Box
-        sx={{
-          py: { xs: 8, md: 12 },
-          background: isDarkMode ? '#0F172A' : '#FFFFFF'
-        }}
-      >
-        <Container maxWidth='lg'>
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography
-              variant='h2'
-              fontWeight='bold'
-              sx={{
-                mb: 2,
-                fontSize: { xs: '2rem', md: '3rem' }
-              }}
-            >
-              Everything You Need
-            </Typography>
-            <Typography
-              variant='h6'
-              color='text.secondary'
-              sx={{
-                mb: 2,
-                maxWidth: '600px',
-                mx: 'auto'
-              }}
-            >
-              Create, customize, and share your digital presence in minutes
-            </Typography>
-          </Box>
-
-          <Grid container spacing={4}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <MotionCard
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  sx={{
-                    height: '100%',
-                    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.05)',
-                    borderRadius: 4,
-                    overflow: 'hidden',
-                    transition: 'transform 0.3s, box-shadow 0.3s',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: '0 12px 20px rgba(0, 0, 0, 0.1)'
-                    }
-                  }}
-                >
-                  <CardContent sx={{ p: 4 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 60,
-                        height: 60,
-                        borderRadius: '12px',
-                        mb: 2,
-                        background: isDarkMode
-                          ? alpha(theme.palette.primary.main, 0.1)
-                          : alpha(theme.palette.primary.main, 0.1),
-                        color: theme.palette.primary.main
-                      }}
-                    >
-                      {feature.icon}
-                    </Box>
-                    <Typography variant='h5' gutterBottom fontWeight='bold'>
-                      {feature.title}
-                    </Typography>
-                    <Typography variant='body1' color='text.secondary'>
-                      {feature.description}
-                    </Typography>
-                  </CardContent>
-                </MotionCard>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
-      {/* How It Works Section WITH DASHBOARD PREVIEW */}
       <Box
         sx={{
           py: { xs: 8, md: 12 },
@@ -506,7 +419,89 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* Final CTA Section */}
+      <Box
+        sx={{
+          py: { xs: 8, md: 12 },
+          background: isDarkMode ? '#0F172A' : '#FFFFFF'
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Typography
+              variant='h2'
+              fontWeight='bold'
+              sx={{
+                mb: 2,
+                fontSize: { xs: '2rem', md: '3rem' }
+              }}
+            >
+              Everything You Need
+            </Typography>
+            <Typography
+              variant='h6'
+              color='text.secondary'
+              sx={{
+                mb: 2,
+                maxWidth: '600px',
+                mx: 'auto'
+              }}
+            >
+              Create, customize, and share your digital presence in minutes
+            </Typography>
+          </Box>
+
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <MotionCard
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  sx={{
+                    height: '100%',
+                    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.05)',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    transition: 'transform 0.3s, box-shadow 0.3s',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      boxShadow: '0 12px 20px rgba(0, 0, 0, 0.1)'
+                    }
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 60,
+                        height: 60,
+                        borderRadius: '12px',
+                        mb: 2,
+                        background: isDarkMode
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.main
+                      }}
+                    >
+                      {feature.icon}
+                    </Box>
+                    <Typography variant='h5' gutterBottom fontWeight='bold'>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant='body1' color='text.secondary'>
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </MotionCard>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
       <Box
         sx={{
           py: { xs: 8, md: 12 },

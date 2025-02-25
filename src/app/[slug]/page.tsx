@@ -70,8 +70,9 @@ async function getDocsWithRetry(query: any, maxRetries = 3) {
   throw lastError || new Error(`Query failed after ${maxRetries} retries`)
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { username } = params
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const { slug } = params
+  const username = slug
   const profileUrl = `https://tanlink.me/${username}`
 
   try {
@@ -129,9 +130,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function ProfilePage({ params }: Props) {
-  const { username } = params
-
+export default async function ProfilePage({ params }: { params: { slug: string } }) {
+  const { slug } = params
+  const username = slug
+  
   try {
     const usernameDoc = await getDocWithRetry(doc(db, 'usernames', username.toLowerCase()))
     if (!usernameDoc.exists()) notFound()

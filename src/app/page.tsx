@@ -120,7 +120,7 @@ export default function Home() {
 
         <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={4} alignItems='center' justifyContent='center'>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={7}>
               <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 {/* Hero Tagline */}
                 <Chip
@@ -198,7 +198,7 @@ export default function Home() {
               </MotionBox>
             </Grid>
 
-            <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Grid item xs={12} md={5} sx={{ display: 'flex', justifyContent: 'center' }}>
               <MotionBox
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

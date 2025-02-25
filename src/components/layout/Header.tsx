@@ -204,21 +204,6 @@ export default function Header() {
                   Add Link
                 </Button>
 
-                {/* Theme Toggle */}
-                <IconButton
-                  onClick={toggleTheme}
-                  sx={{
-                    mr: 1,
-                    color: isDarkMode ? '#E2E8F0' : '#64748B',
-                    backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    '&:hover': {
-                      backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.2)' : 'rgba(0, 0, 0, 0.1)'
-                    }
-                  }}
-                >
-                  {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-                </IconButton>
-
                 {/* User Menu */}
                 <Button
                   onClick={handleMenu}
@@ -350,6 +335,21 @@ export default function Header() {
                 </Button>
               </Box>
             )}
+
+            {/* Theme Toggle */}
+            <IconButton
+              onClick={toggleTheme}
+              sx={{
+                mr: 1,
+                color: isDarkMode ? '#E2E8F0' : '#64748B',
+                backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+                }
+              }}
+            >
+              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
           </Box>
         </Toolbar>
       </Container>

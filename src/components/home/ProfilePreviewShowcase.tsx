@@ -48,15 +48,6 @@ const THEMES = [
     borderColor: '#bfdbfe'
   },
   {
-    id: 'modern-light',
-    bgColor: '#f0f2f5',
-    cardBgColor: '#ffffff',
-    textColor: '#000000',
-    buttonBgColor: 'linear-gradient(45deg, #2196F3, #21CBF3)',
-    buttonTextColor: '#ffffff',
-    borderColor: '#F5F7FF'
-  },
-  {
     id: 'dark-glass',
     bgColor: '#1a1a1a',
     cardBgColor: 'rgba(45,45,45,0.8)',
@@ -84,15 +75,6 @@ const THEMES = [
     borderColor: '#f7e5ff'
   },
   {
-    id: 'ocean-breeze',
-    bgColor: '#e3f2fd',
-    cardBgColor: '#ffffff',
-    textColor: '#1e3a5c',
-    buttonBgColor: 'linear-gradient(45deg, #4FC3F7, #29B6F6)',
-    buttonTextColor: '#ffffff',
-    borderColor: '#BBDEFB'
-  },
-  {
     id: 'minimal-mono',
     bgColor: '#ffffff',
     cardBgColor: '#fafafa',
@@ -100,15 +82,6 @@ const THEMES = [
     buttonBgColor: 'transparent',
     buttonTextColor: '#000000',
     borderColor: '#000000'
-  },
-  {
-    id: 'sunset-bliss',
-    bgColor: '#ffecd2',
-    cardBgColor: '#ffffff',
-    textColor: '#5d4037',
-    buttonBgColor: 'linear-gradient(45deg, #FF7E5F, #FEB47B)',
-    buttonTextColor: '#ffffff',
-    borderColor: '#fcb69f'
   },
   {
     id: 'forest-haven',
@@ -145,15 +118,6 @@ const THEMES = [
     buttonBgColor: '#ffe082',
     buttonTextColor: '#6d4c41',
     borderColor: '#ffe0b2'
-  },
-  {
-    id: 'icy-calm',
-    bgColor: '#e3f2fd',
-    cardBgColor: '#ffffff',
-    textColor: '#1e88e5',
-    buttonBgColor: 'linear-gradient(45deg, #64b5f6, #42a5f5)',
-    buttonTextColor: '#ffffff',
-    borderColor: '#e3f2fd'
   },
   {
     id: 'cosmic-dream',

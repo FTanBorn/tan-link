@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import {
   Box,
   Container,
@@ -32,7 +32,6 @@ import { platformIcons } from '@/components/tour/steps/LinksStep/constants'
 import { ThemePreset } from '@/types/theme'
 import { analyticsService } from '@/services/analytics'
 import { QRCodeCanvas } from 'qrcode.react'
-import Image from 'next/image'
 
 interface UserData {
   username: string
@@ -50,19 +49,21 @@ interface Link {
   order: number
 }
 
-type ClientParams = {
-  params: {
-    username: string
-  }
+interface PageProps {
+  params: Promise<{ username: string }>
 }
 
+// QR kod indirme fonksiyonu
 const downloadQRCode = (qrCodeRef: React.RefObject<HTMLDivElement>, username: string) => {
   if (!qrCodeRef.current) return
 
   const canvas = qrCodeRef.current.querySelector('canvas')
   if (!canvas) return
 
+  // Canvas'ı bir PNG'ye dönüştür
   const dataUrl = canvas.toDataURL('image/png')
+
+  // Tarayıcıda bir indirme bağlantısı oluştur
   const link = document.createElement('a')
   link.href = dataUrl
   link.download = `${username}-qrcode.png`
@@ -71,6 +72,7 @@ const downloadQRCode = (qrCodeRef: React.RefObject<HTMLDivElement>, username: st
   document.body.removeChild(link)
 }
 
+// Modal QR kod bileşeni
 const QRCodeModal = ({
   open,
   onClose,
@@ -82,7 +84,7 @@ const QRCodeModal = ({
   url: string
   username: string
 }) => {
-  const qrCodeRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement)
+  const qrCodeRef = useRef<HTMLDivElement>(null)
 
   return (
     <Dialog
@@ -99,7 +101,15 @@ const QRCodeModal = ({
     >
       <DialogContent sx={{ p: 3, textAlign: 'center' }}>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0 }}>
-          <IconButton onClick={onClose} size='small'>
+          <IconButton
+            onClick={onClose}
+            size='small'
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8
+            }}
+          >
             <CloseIcon fontSize='small' />
           </IconButton>
         </Box>
@@ -108,7 +118,19 @@ const QRCodeModal = ({
           Scan QR Code
         </Typography>
 
-        <Box ref={qrCodeRef} sx={{ mt: 2, mb: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box
+          ref={qrCodeRef}
+          sx={{
+            mt: 2,
+            mb: 3,
+            display: 'flex',
+            justifyContent: 'center',
+            '& canvas': {
+              borderRadius: 2,
+              border: '1px solid #eaeaea'
+            }
+          }}
+        >
           <QRCodeCanvas value={url} size={200} level='H' includeMargin={true} />
         </Box>
 
@@ -130,7 +152,6 @@ const QRCodeModal = ({
     </Dialog>
   )
 }
-
 const defaultStyles = {
   container: {
     minHeight: '100vh',
@@ -172,8 +193,8 @@ const defaultStyles = {
   }
 }
 
-export default function ClientProfilePage({ params }: ClientParams) {
-  const { username } = params
+export default function ProfilePage({ params }: PageProps) {
+  const { username } = use(params)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [userData, setUserData] = useState<UserData | null>(null)
@@ -192,7 +213,6 @@ export default function ClientProfilePage({ params }: ClientParams) {
     const fetchProfile = async () => {
       try {
         const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()))
-        console.log(usernameDoc)
         if (!usernameDoc.exists()) {
           setError('Profile not found')
           setLoading(false)
@@ -204,6 +224,8 @@ export default function ClientProfilePage({ params }: ClientParams) {
         setUserId(uid)
 
         const userDoc = await getDoc(doc(db, 'users', uid))
+        console.log(userDoc)
+
         if (!userDoc.exists()) {
           setError('User not found')
           setLoading(false)
@@ -238,6 +260,7 @@ export default function ClientProfilePage({ params }: ClientParams) {
           }
         }
 
+        // Sayfa yüklendikten sonra animasyon için
         setTimeout(() => {
           if (isSubscribed) setPageLoaded(true)
         }, 100)
@@ -260,13 +283,16 @@ export default function ClientProfilePage({ params }: ClientParams) {
   }, [username])
 
   const handleLinkClick = (e: React.MouseEvent, link: Link) => {
+    // Tıklama feedback efekti
     const button = e.currentTarget as HTMLElement
     button.style.transform = 'scale(0.98)'
     setTimeout(() => {
       button.style.transform = 'scale(1)'
     }, 100)
 
-    if (!userId) return
+    if (!userId) {
+      return true
+    }
 
     try {
       analyticsService
@@ -275,6 +301,8 @@ export default function ClientProfilePage({ params }: ClientParams) {
     } catch (error) {
       console.error('Error initiating click recording:', error)
     }
+
+    return true
   }
 
   const handleCopyLink = () => {
@@ -364,7 +392,7 @@ export default function ClientProfilePage({ params }: ClientParams) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: theme?.backgroundStyle?.value || defaultStyles.container.backgroundColor
+          background: theme?.backgroundStyle.value || defaultStyles.container.backgroundColor
         }}
       >
         <CircularProgress />
@@ -381,255 +409,236 @@ export default function ClientProfilePage({ params }: ClientParams) {
   }
 
   return (
-    <>
-      <Box
-        sx={{
-          ...defaultStyles.container,
-          background: theme?.backgroundStyle?.value || defaultStyles.container.backgroundColor,
-          backdropFilter: theme?.backgroundStyle?.blur ? `blur(${theme.backgroundStyle.blur}px)` : undefined,
-          transition: 'background-color 0.3s ease'
-        }}
-      >
-        <Container maxWidth='sm' sx={{ py: 4 }}>
-          <Fade in={pageLoaded} timeout={800}>
-            <Paper
-              elevation={theme?.buttonStyle?.type === 'glass' ? 0 : 3}
+    <Box
+      sx={{
+        ...defaultStyles.container,
+        background: theme?.backgroundStyle.value || defaultStyles.container.backgroundColor,
+        backdropFilter: theme?.backgroundStyle.blur ? `blur(${theme.backgroundStyle.blur}px)` : undefined,
+        transition: 'background-color 0.3s ease'
+      }}
+    >
+      <Container maxWidth='sm' sx={{ py: 4 }}>
+        <Fade in={pageLoaded} timeout={800}>
+          <Paper
+            elevation={theme?.buttonStyle.type === 'glass' ? 0 : 3}
+            sx={{
+              ...defaultStyles.paper,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
+              color: theme?.textColor || 'inherit',
+              borderRadius: theme?.buttonStyle?.style.borderRadius || defaultStyles.paper.borderRadius,
+              backdropFilter:
+                theme?.backgroundStyle.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
+              border: theme?.buttonStyle.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+              position: 'relative',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 15px 50px rgba(0, 0, 0, 0.12)'
+              }
+            }}
+          >
+            <Box
               sx={{
-                ...defaultStyles.paper,
+                position: 'absolute',
+                top: 16,
+                right: 16,
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
+                gap: 1,
+                zIndex: 2
+              }}
+            >
+              <Tooltip title='Copy Link' placement='left'>
+                <IconButton onClick={handleCopyLink} size='small' sx={defaultStyles.shareButton}>
+                  <ContentCopyIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title='Share Profile' placement='left'>
+                <IconButton onClick={handleShare} size='small' sx={defaultStyles.shareButton}>
+                  <ShareIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title='QR Code' placement='left'>
+                <IconButton onClick={() => setQrDialogOpen(true)} size='small' sx={defaultStyles.shareButton}>
+                  <QrCodeIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Avatar
+              src={userData?.photoURL}
+              sx={{
+                ...defaultStyles.avatar,
+                borderColor: theme?.buttonStyle.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
+                boxShadow:
+                  theme?.buttonStyle.type === 'neon'
+                    ? `0 0 20px ${theme.buttonStyle.style.color}`
+                    : defaultStyles.avatar.boxShadow,
                 bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
-                color: theme?.textColor || 'inherit',
-                borderRadius: theme?.buttonStyle?.style.borderRadius || defaultStyles.paper.borderRadius,
-                backdropFilter:
-                  theme?.backgroundStyle?.type === 'glass' ? `blur(${theme.backgroundStyle.blur || 10}px)` : undefined,
-                border: theme?.buttonStyle?.type === 'glass' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                position: 'relative',
-                transition: 'all 0.3s ease',
                 '&:hover': {
-                  boxShadow: '0 15px 50px rgba(0, 0, 0, 0.12)'
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)'
                 }
               }}
             >
-              <Box
+              {userData?.displayName?.[0]}
+            </Avatar>
+
+            <Typography
+              variant='h5'
+              gutterBottom
+              fontWeight='bold'
+              sx={{
+                background: theme?.buttonStyle.type === 'gradient' ? theme.buttonStyle.style.background : 'none',
+                WebkitBackgroundClip: theme?.buttonStyle.type === 'gradient' ? 'text' : 'none',
+                WebkitTextFillColor: theme?.buttonStyle.type === 'gradient' ? 'transparent' : 'inherit',
+                color: theme?.textColor
+              }}
+            >
+              {userData?.displayName}
+            </Typography>
+
+            {userData?.bio && (
+              <Typography
+                align='center'
                 sx={{
-                  position: 'absolute',
-                  top: 16,
-                  right: 16,
-                  display: 'flex',
-                  gap: 1,
-                  zIndex: 2
+                  mb: 4,
+                  opacity: 0.8,
+                  color: theme?.textColor ? `${theme.textColor}CC` : 'text.secondary',
+                  maxWidth: '600px',
+                  mx: 'auto',
+                  lineHeight: 1.6,
+                  px: 2
                 }}
               >
-                <Tooltip title='Copy Link' placement='left'>
-                  <IconButton onClick={handleCopyLink} size='small' sx={defaultStyles.shareButton}>
-                    <ContentCopyIcon fontSize='small' />
-                  </IconButton>
-                </Tooltip>
+                {userData.bio}
+              </Typography>
+            )}
 
-                <Tooltip title='Share Profile' placement='left'>
-                  <IconButton onClick={handleShare} size='small' sx={defaultStyles.shareButton}>
-                    <ShareIcon fontSize='small' />
-                  </IconButton>
-                </Tooltip>
+            <Box sx={{ width: '100%', px: { xs: 0, sm: 2 } }}>
+              {links.map((link, index) => {
+                const platformInfo = platformIcons[link.platform]
+                return (
+                  <Fade key={link.id} in timeout={300 + index * 100}>
+                    <Button
+                      component='a'
+                      href={link.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      fullWidth
+                      variant={theme?.buttonStyle?.type === 'outline' ? 'outlined' : 'contained'}
+                      startIcon={platformInfo.icon}
+                      onClick={e => handleLinkClick(e, link)}
+                      sx={getButtonStyle(platformInfo)}
+                    >
+                      {link.title || platformInfo.placeholder}
+                    </Button>
+                  </Fade>
+                )
+              })}
+            </Box>
 
-                <Tooltip title='QR Code' placement='left'>
-                  <IconButton onClick={() => setQrDialogOpen(true)} size='small' sx={defaultStyles.shareButton}>
-                    <QrCodeIcon fontSize='small' />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-
-              <Avatar
-                src={userData?.photoURL}
+            {/* Paylaşım seçenekleri */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 2,
+                mt: 3,
+                mb: 2
+              }}
+            >
+              <IconButton
+                onClick={handleWhatsAppShare}
                 sx={{
-                  ...defaultStyles.avatar,
-                  borderColor: theme?.buttonStyle?.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
-                  boxShadow:
-                    theme?.buttonStyle?.type === 'neon'
-                      ? `0 0 20px ${theme.buttonStyle.style.color}`
-                      : defaultStyles.avatar.boxShadow,
-                  bgcolor: theme?.cardBackground || defaultStyles.paper.backgroundColor,
+                  bgcolor: '#25D366',
+                  color: '#fff',
+                  '&:hover': { bgcolor: '#128C7E' }
+                }}
+              >
+                <WhatsAppIcon />
+              </IconButton>
+
+              <IconButton
+                onClick={handleEmailShare}
+                sx={{
+                  bgcolor: '#D44638',
+                  color: '#fff',
+                  '&:hover': { bgcolor: '#B23121' }
+                }}
+              >
+                <EmailIcon />
+              </IconButton>
+            </Box>
+
+            {/* Minimalist Footer - Güncellendi */}
+            <Box
+              sx={{
+                mt: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <Typography
+                variant='caption'
+                sx={{
+                  color: theme?.textColor || 'text.secondary',
+                  opacity: 0.5,
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  fontWeight: 300,
+                  fontSize: '0.65rem'
+                }}
+              >
+                Powered by TanLink
+              </Typography>
+
+              <Link
+                href='/r'
+                underline='hover'
+                sx={{
+                  color: theme?.buttonStyle?.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
+                  fontSize: '0.75rem',
+                  opacity: 0.8,
+                  transition: 'all 0.2s ease',
                   '&:hover': {
-                    transform: 'scale(1.05)',
-                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)'
+                    opacity: 1,
+                    transform: 'translateY(-1px)'
                   }
                 }}
               >
-                {userData?.displayName?.[0]}
-              </Avatar>
+                Create your own profile
+              </Link>
+            </Box>
+          </Paper>
+        </Fade>
+      </Container>
 
-              <Typography
-                variant='h5'
-                gutterBottom
-                fontWeight='bold'
-                sx={{
-                  background: theme?.buttonStyle?.type === 'gradient' ? theme.buttonStyle.style.background : 'none',
-                  WebkitBackgroundClip: theme?.buttonStyle?.type === 'gradient' ? 'text' : 'none',
-                  WebkitTextFillColor: theme?.buttonStyle?.type === 'gradient' ? 'transparent' : 'inherit',
-                  color: theme?.textColor
-                }}
-              >
-                {userData?.displayName}
-              </Typography>
+      {/* QR kod modalı ayrı bir bileşen olarak kullanılıyor */}
+      <QRCodeModal
+        open={qrDialogOpen}
+        onClose={() => setQrDialogOpen(false)}
+        url={window.location.href}
+        username={username}
+      />
 
-              {userData?.bio && (
-                <Typography
-                  align='center'
-                  sx={{
-                    mb: 4,
-                    opacity: 0.8,
-                    color: theme?.textColor ? `${theme.textColor}CC` : 'text.secondary',
-                    maxWidth: '600px',
-                    mx: 'auto',
-                    lineHeight: 1.6,
-                    px: 2
-                  }}
-                >
-                  {userData.bio}
-                </Typography>
-              )}
-
-              <Box sx={{ width: '100%', px: { xs: 0, sm: 2 } }}>
-                {links.map((link, index) => {
-                  const platformInfo = platformIcons[link.platform]
-                  return (
-                    <Fade key={link.id} in timeout={300 + index * 100}>
-                      <Button
-                        component='a'
-                        href={link.url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        fullWidth
-                        variant={theme?.buttonStyle?.type === 'outline' ? 'outlined' : 'contained'}
-                        startIcon={platformInfo.icon}
-                        onClick={e => handleLinkClick(e, link)}
-                        sx={getButtonStyle(platformInfo)}
-                      >
-                        {link.title || platformInfo.placeholder}
-                      </Button>
-                    </Fade>
-                  )
-                })}
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 2,
-                  mt: 3,
-                  mb: 2
-                }}
-              >
-                <IconButton
-                  onClick={handleWhatsAppShare}
-                  sx={{
-                    bgcolor: '#25D366',
-                    color: '#fff',
-                    '&:hover': { bgcolor: '#128C7E' }
-                  }}
-                >
-                  <WhatsAppIcon />
-                </IconButton>
-
-                <IconButton
-                  onClick={handleEmailShare}
-                  sx={{
-                    bgcolor: '#D44638',
-                    color: '#fff',
-                    '&:hover': { bgcolor: '#B23121' }
-                  }}
-                >
-                  <EmailIcon />
-                </IconButton>
-              </Box>
-
-              <Box
-                sx={{
-                  mt: 3,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    opacity: 0.5
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      width: 18,
-                      height: 18,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Image src='/logo.svg' alt='TanLink Logo' width={18} height={18} style={{ opacity: 0.7 }} />
-                  </Box>
-                  <Typography
-                    variant='caption'
-                    sx={{
-                      color: theme?.textColor || 'text.secondary',
-                      letterSpacing: 1,
-                      textTransform: 'uppercase',
-                      fontWeight: 300,
-                      fontSize: '0.65rem'
-                    }}
-                  >
-                    Powered by TanLink
-                  </Typography>
-                </Box>
-
-                <Link
-                  href='/r'
-                  underline='hover'
-                  sx={{
-                    color: theme?.buttonStyle?.type === 'neon' ? theme.buttonStyle.style.color : 'primary.main',
-                    fontSize: '0.75rem',
-                    opacity: 0.8,
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      opacity: 1,
-                      transform: 'translateY(-1px)'
-                    }
-                  }}
-                >
-                  Create your own profile
-                </Link>
-              </Box>
-            </Paper>
-          </Fade>
-        </Container>
-
-        <QRCodeModal
-          open={qrDialogOpen}
-          onClose={() => setQrDialogOpen(false)}
-          url={window.location.href}
-          username={username}
-        />
-
-        <Snackbar
-          open={copySnackbar}
-          autoHideDuration={2000}
-          onClose={() => setCopySnackbar(false)}
-          message='Link copied to clipboard'
-        />
-        <Snackbar
-          open={shareSnackbar}
-          autoHideDuration={2000}
-          onClose={() => setShareSnackbar(false)}
-          message='Thanks for sharing!'
-        />
-      </Box>
-    </>
+      <Snackbar
+        open={copySnackbar}
+        autoHideDuration={2000}
+        onClose={() => setCopySnackbar(false)}
+        message='Link copied to clipboard'
+      />
+      <Snackbar
+        open={shareSnackbar}
+        autoHideDuration={2000}
+        onClose={() => setShareSnackbar(false)}
+        message='Thanks for sharing!'
+      />
+    </Box>
   )
 }

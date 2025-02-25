@@ -1,13 +1,33 @@
 import type { Metadata } from 'next'
-import { getDoc, doc } from 'firebase/firestore'
+import { getDoc, doc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import ClientProfilePage from './client-page'
 
-// Next.js 15 için doğru props tipini tanımlama
+import { ThemePreset } from '@/types/theme'
+import ProfileComponent from './ProfileComponent'
+
+// Props tipi
 type Props = {
   params: {
     username: string
   }
+}
+
+// Kullanıcı verisi tipi
+interface UserData {
+  username: string
+  displayName: string
+  photoURL?: string
+  bio?: string
+  theme?: ThemePreset | null
+}
+
+// Link tipi
+interface Link {
+  id: string
+  platform: any
+  title: string
+  url: string
+  order: number
 }
 
 // Metadata fonksiyonu
@@ -67,6 +87,45 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Ana sayfa fonksiyonu
-export default function ProfilePage({ params }: Props) {
-  return <ClientProfilePage params={params} />
+export default async function ProfilePage({ params }: Props) {
+  const { username } = params
+
+  try {
+    // Kullanıcı verilerini sunucu tarafında çekelim
+    const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()))
+
+    if (!usernameDoc.exists()) {
+      return <div>Profile not found</div>
+    }
+
+    const uid = usernameDoc.data().uid
+    const userDoc = await getDoc(doc(db, 'users', uid))
+
+    if (!userDoc.exists()) {
+      return <div>User not found</div>
+    }
+
+    const userData = userDoc.data() as UserData
+
+    // Kullanıcının bağlantılarını çekelim
+    const linksRef = collection(db, `users/${uid}/links`)
+    const linksSnapshot = await getDocs(linksRef)
+
+    const links = linksSnapshot.docs
+      .map(
+        doc =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+            order: doc.data().order || 0
+          } as Link)
+      )
+      .sort((a, b) => a.order - b.order)
+
+    // İstemci tarafı bileşenine verileri gönder
+    return <ProfileComponent userData={userData} links={links} username={username} userId={uid} />
+  } catch (error) {
+    console.error('Error loading profile:', error)
+    return <div>Error loading profile. Please try again later.</div>
+  }
 }

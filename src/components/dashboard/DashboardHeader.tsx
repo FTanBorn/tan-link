@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation'
 import { auth } from '@/config/firebase'
 import { useThemeContext } from '@/context/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
+import Image from 'next/image'
 
 export default function DashboardHeader() {
   const theme = useTheme()
@@ -96,25 +97,51 @@ export default function DashboardHeader() {
             transition: 'all 0.3s ease'
           }}
         >
-          <Typography
-            variant='h5'
-            component='div'
+          <Box
             sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
               cursor: 'pointer',
-              fontWeight: 'bold',
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.5px',
-              transition: 'transform 0.2s ease',
               '&:hover': {
-                transform: 'scale(1.05)'
+                '& .logo-text': {
+                  transform: 'scale(1.05)'
+                }
               }
             }}
             onClick={() => router.push('/')}
           >
-            TanLink
-          </Typography>
+            {/* Logo */}
+            <Box
+              sx={{
+                position: 'relative',
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Image src='/logo.svg' alt='TanLink Logo' width={36} height={36} priority />
+            </Box>
+
+            {/* Text Logo */}
+            <Typography
+              variant='h5'
+              component='div'
+              className='logo-text'
+              sx={{
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.5px',
+                transition: 'transform 0.2s ease'
+              }}
+            >
+              TanLink
+            </Typography>
+          </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
             {/* Theme Toggle */}

@@ -14,7 +14,8 @@ import {
   Avatar,
   useTheme,
   Fade,
-  Divider
+  Divider,
+  Stack
 } from '@mui/material'
 import {
   Brightness4,
@@ -27,6 +28,7 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import Image from 'next/image'
 import { auth } from '@/config/firebase'
 import { signOut } from 'firebase/auth'
 import { useThemeContext } from '@/context/ThemeContext'
@@ -144,23 +146,30 @@ export default function Header() {
       <Container maxWidth='lg'>
         <Toolbar sx={{ py: 1, justifyContent: 'space-between' }}>
           {/* Logo */}
-          <Typography
-            variant='h5'
-            component='div'
+          <Stack
+            direction={'row'}
+            alignItems={'center'}
+            spacing={1}
             onClick={() => router.push('/')}
-            sx={{
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-1px)',
-                opacity: 0.9
-              },
-              ...currentStyles.logo
-            }}
+            sx={{ cursor: 'pointer' }}
           >
-            TanLink
-          </Typography>
-
+            <Image src='/logo.svg' alt='TanLink Logo' width={40} height={40} />
+            <Typography
+              variant='h5'
+              component='div'
+              sx={{
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  opacity: 0.9
+                },
+                ...currentStyles.logo
+              }}
+            >
+              TanLink
+            </Typography>
+          </Stack>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {user && (
               <>

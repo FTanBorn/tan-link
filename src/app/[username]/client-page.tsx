@@ -82,7 +82,7 @@ const QRCodeModal = ({
   url: string
   username: string
 }) => {
-  const qrCodeRef = useRef<HTMLDivElement>(null)
+  const qrCodeRef = useRef<HTMLDivElement>(null as unknown as HTMLDivElement)
 
   return (
     <Dialog
@@ -192,6 +192,7 @@ export default function ClientProfilePage({ params }: ClientParams) {
     const fetchProfile = async () => {
       try {
         const usernameDoc = await getDoc(doc(db, 'usernames', username.toLowerCase()))
+        console.log(usernameDoc)
         if (!usernameDoc.exists()) {
           setError('Profile not found')
           setLoading(false)

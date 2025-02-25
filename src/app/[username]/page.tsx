@@ -1,19 +1,17 @@
-// src/app/[username]/page.tsx
 import type { Metadata } from 'next'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import ClientProfilePage from './client-page'
 
-// Params tipini tanımlama
-type Params = {
+// Next.js 15 için doğru props tipini tanımlama
+type Props = {
   params: {
     username: string
   }
-  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 // Metadata fonksiyonu
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = params
 
   try {
@@ -59,7 +57,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       }
     }
   } catch (error) {
-    console.log(error)
+    console.error('Metadata error:', error)
     // Hata durumunda basit metadata döndürme
     return {
       title: `${username} | TanLink`,
@@ -69,6 +67,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 // Ana sayfa fonksiyonu
-export default function ProfilePage({ params }: Params) {
+export default function ProfilePage({ params }: Props) {
   return <ClientProfilePage params={params} />
 }

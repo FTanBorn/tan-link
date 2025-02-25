@@ -8,12 +8,6 @@ import ProfileComponent from './ProfileComponent'
 import { ThemePreset } from '@/types/theme'
 import Loading from '../loading'
 
-type Props = {
-  params: {
-    username: string
-  }
-}
-
 interface UserData {
   username: string
   displayName: string
@@ -133,7 +127,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function ProfilePage({ params }: { params: { slug: string } }) {
   const { slug } = params
   const username = slug
-  
+
   try {
     const usernameDoc = await getDocWithRetry(doc(db, 'usernames', username.toLowerCase()))
     if (!usernameDoc.exists()) notFound()
